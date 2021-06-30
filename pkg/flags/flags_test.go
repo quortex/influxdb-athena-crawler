@@ -7,8 +7,8 @@ import (
 
 func TestTag_UnmarshalFlag(t *testing.T) {
 	type fields struct {
-		Row string
 		Tag string
+		Row string
 	}
 	type args struct {
 		arg string
@@ -20,7 +20,7 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Unmarshal invalid flag should return an error",
+			name:   "Unmarshal invalid flag should return an error",
 			fields: fields{},
 			args: args{
 				arg: "foo=%",
@@ -30,8 +30,8 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 		{
 			name: "Unmarshal flag with key only should return a field with identical row / tag",
 			fields: fields{
-				Row: "foo",
 				Tag: "foo",
+				Row: "foo",
 			},
 			args: args{
 				arg: "foo",
@@ -41,22 +41,22 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 		{
 			name: "Unmarshal flag with key only should return a field with specific tag",
 			fields: fields{
-				Row: "foo",
-				Tag: "bar",
+				Tag: "foo",
+				Row: "bar",
 			},
 			args: args{
-				arg: "foo={tag:bar}",
+				arg: "foo={row:bar}",
 			},
 			wantErr: false,
 		},
 		{
 			name: "Unmarshal flag with additional args should work as well",
 			fields: fields{
-				Row: "foo",
-				Tag: "bar",
+				Tag: "foo",
+				Row: "bar",
 			},
 			args: args{
-				arg: "foo={tag:bar,fooArg:barArg}",
+				arg: "foo={row:bar,fooArg:barArg}",
 			},
 			wantErr: false,
 		},
@@ -64,8 +64,8 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 	for _, tt := range tests {
 		got := &Tag{}
 		want := &Tag{
-			Row: tt.fields.Row,
 			Tag: tt.fields.Tag,
+			Row: tt.fields.Row,
 		}
 		if err := got.UnmarshalFlag(tt.args.arg); (err != nil) != tt.wantErr {
 			t.Errorf("Tag.UnmarshalFlag() error = %v, wantErr %v", err, tt.wantErr)
@@ -78,8 +78,8 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 
 func TestTag_MarshalFlag(t *testing.T) {
 	type fields struct {
-		Row string
 		Tag string
+		Row string
 	}
 	tests := []struct {
 		name    string
@@ -96,7 +96,7 @@ func TestTag_MarshalFlag(t *testing.T) {
 		{
 			name: "Marshal tag with row only should return a properly formatted tag",
 			fields: fields{
-				Row: "foo",
+				Tag: "foo",
 			},
 			want:    "foo",
 			wantErr: false,
@@ -104,18 +104,18 @@ func TestTag_MarshalFlag(t *testing.T) {
 		{
 			name: "Marshal tag with row and tag should return a properly formatted tag",
 			fields: fields{
-				Row: "foo",
-				Tag: "bar",
+				Tag: "foo",
+				Row: "bar",
 			},
-			want:    "foo={tag:bar}",
+			want:    "foo={row:bar}",
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &Tag{
-				Row: tt.fields.Row,
 				Tag: tt.fields.Tag,
+				Row: tt.fields.Row,
 			}
 			got, err := tr.MarshalFlag()
 			if (err != nil) != tt.wantErr {
@@ -131,8 +131,8 @@ func TestTag_MarshalFlag(t *testing.T) {
 
 func TestField_UnmarshalFlag(t *testing.T) {
 	type fields struct {
-		Row       string
 		Field     string
+		Row       string
 		FieldType FieldType
 	}
 	type args struct {
@@ -171,8 +171,8 @@ func TestField_UnmarshalFlag(t *testing.T) {
 		{
 			name: "Unmarshal flag with valid field type should return a properly formatted field",
 			fields: fields{
-				Row:       "foo",
 				Field:     "foo",
+				Row:       "foo",
 				FieldType: FieldTypeInteger,
 			},
 			args: args{
@@ -183,24 +183,24 @@ func TestField_UnmarshalFlag(t *testing.T) {
 		{
 			name: "Unmarshal flag with valid field type and specific field name should return a properly formatted flag",
 			fields: fields{
-				Row:       "foo",
-				Field:     "bar",
+				Field:     "foo",
+				Row:       "bar",
 				FieldType: FieldTypeFloat,
 			},
 			args: args{
-				arg: "foo={type:float,field:bar}",
+				arg: "foo={type:float,row:bar}",
 			},
 			wantErr: false,
 		},
 		{
 			name: "Unmarshal flag with with additional args should work as well",
 			fields: fields{
-				Row:       "foo",
-				Field:     "bar",
+				Field:     "foo",
+				Row:       "bar",
 				FieldType: FieldTypeString,
 			},
 			args: args{
-				arg: "foo={type:string,field:bar,bar:baz}",
+				arg: "foo={type:string,row:bar,bar:baz}",
 			},
 			wantErr: false,
 		},
@@ -209,8 +209,8 @@ func TestField_UnmarshalFlag(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := &Field{}
 			want := &Field{
-				Row:       tt.fields.Row,
 				Field:     tt.fields.Field,
+				Row:       tt.fields.Row,
 				FieldType: tt.fields.FieldType,
 			}
 			if err := got.UnmarshalFlag(tt.args.arg); (err != nil) != tt.wantErr {
@@ -225,8 +225,8 @@ func TestField_UnmarshalFlag(t *testing.T) {
 
 func TestField_MarshalFlag(t *testing.T) {
 	type fields struct {
-		Row       string
 		Field     string
+		Row       string
 		FieldType FieldType
 	}
 	tests := []struct {
@@ -244,7 +244,7 @@ func TestField_MarshalFlag(t *testing.T) {
 		{
 			name: "Marshal field with row only should return a properly formatted field",
 			fields: fields{
-				Row: "foo",
+				Field: "foo",
 			},
 			want:    "foo",
 			wantErr: false,
@@ -252,7 +252,7 @@ func TestField_MarshalFlag(t *testing.T) {
 		{
 			name: "Marshal tag with row and type should return a properly formatted tag",
 			fields: fields{
-				Row:       "foo",
+				Field:     "foo",
 				FieldType: FieldTypeBool,
 			},
 			want:    "foo={type:bool}",
@@ -261,19 +261,19 @@ func TestField_MarshalFlag(t *testing.T) {
 		{
 			name: "Marshal tag with row, type and field should return a properly formatted tag",
 			fields: fields{
-				Row:       "foo",
+				Field:     "foo",
+				Row:       "bar",
 				FieldType: FieldTypeInteger,
-				Field:     "bar",
 			},
-			want:    "foo={type:int,field:bar}",
+			want:    "foo={type:int,row:bar}",
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &Field{
-				Row:       tt.fields.Row,
 				Field:     tt.fields.Field,
+				Row:       tt.fields.Row,
 				FieldType: tt.fields.FieldType,
 			}
 			got, err := f.MarshalFlag()

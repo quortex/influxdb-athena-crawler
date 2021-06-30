@@ -55,7 +55,7 @@ func (m flagMap) marshalFlag() (string, error) {
 
 // Tag describes an InfluxDB tag flag
 type Tag struct {
-	Row, Tag string
+	Tag, Row string
 }
 
 // UnmarshalFlag is the go-flags Value UnmarshalFlag implementation for Tag
@@ -64,19 +64,19 @@ func (t *Tag) UnmarshalFlag(arg string) error {
 	if err != nil {
 		return fmt.Errorf("%q failed to parse", err)
 	}
-	t.Row = fm.k
-	t.Tag = fm.v["tag"]
-	if t.Tag == "" {
-		t.Tag = t.Row
+	t.Tag = fm.k
+	t.Row = fm.v["row"]
+	if t.Row == "" {
+		t.Row = t.Tag
 	}
 	return nil
 }
 
 // MarshalFlag is the go-flags Value MarshalFlag implementation for Tag
 func (t *Tag) MarshalFlag() (string, error) {
-	m := flagMap{k: t.Row, v: map[string]string{}}
-	if t.Tag != "" {
-		m.v["tag"] = string(t.Tag)
+	m := flagMap{k: t.Tag, v: map[string]string{}}
+	if t.Row != "" {
+		m.v["row"] = string(t.Row)
 	}
 
 	return m.marshalFlag()
@@ -105,7 +105,7 @@ func (t FieldType) isValid() bool {
 
 // Field describes an InfluxDB field tag.
 type Field struct {
-	Row, Field string
+	Field, Row string
 	FieldType  FieldType
 }
 
@@ -116,10 +116,10 @@ func (f *Field) UnmarshalFlag(arg string) error {
 		return fmt.Errorf("%q failed to parse", err)
 	}
 
-	row := fm.k
-	field := fm.v["field"]
-	if field == "" {
-		field = row
+	field := fm.k
+	row := fm.v["row"]
+	if row == "" {
+		row = field
 	}
 
 	fType := FieldType(fm.v["type"])
@@ -127,20 +127,20 @@ func (f *Field) UnmarshalFlag(arg string) error {
 		return fmt.Errorf("%q invalid field type", arg)
 	}
 
-	f.Row = row
 	f.Field = field
+	f.Row = row
 	f.FieldType = fType
 	return nil
 }
 
 // MarshalFlag is the go-flags Value MarshalFlag implementation for Field
 func (f *Field) MarshalFlag() (string, error) {
-	m := flagMap{k: f.Row, v: map[string]string{}}
+	m := flagMap{k: f.Field, v: map[string]string{}}
 	if f.FieldType != "" {
 		m.v["type"] = string(f.FieldType)
 	}
-	if f.Field != "" {
-		m.v["field"] = f.Field
+	if f.Row != "" {
+		m.v["row"] = f.Row
 	}
 
 	return m.marshalFlag()
@@ -159,8 +159,8 @@ type Options struct {
 	InfluxBucket    string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
 	TimestampRow    string        `long:"timestamp-row" description:"The timestamp row in CSV." default:"timestamp"`
 	TimestampLayout string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
-	Tags            []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo or --tag='foo={tag:bar}' to set a specific tag name."`
-	Fields          []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,field:bar}' if not specified, field is the same as row. type can be float, int, string or bool."`
+	Tags            []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row."`
+	Fields          []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,row:bar}', if not specified, CSV row matches field name. Type can be float, int, string or bool."`
 }
 
 // Parse parses flags into give Option
