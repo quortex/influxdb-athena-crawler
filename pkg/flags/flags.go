@@ -1,0 +1,169 @@
+package flags
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/jessevdk/go-flags"
+)
+
+// regexFlagMap is a regex used toi extract map types flags
+var regexFlagMap = regexp.MustCompile(`^(\w*)(?:={(.*)})?$`)
+
+// flagMap handles map types flags marshalling
+type flagMap struct {
+	k string
+	v map[string]string
+}
+
+// unmarshalFlag converts flag args to flagMap
+func unmarshalFlag(arg string) (*flagMap, error) {
+	matchs := regexFlagMap.FindStringSubmatch(arg)
+	if len(matchs) < 3 {
+		return nil, fmt.Errorf("%q failed to parse", arg)
+	}
+	res := flagMap{k: matchs[1], v: make(map[string]string)}
+	values := matchs[2]
+	if values != "" {
+		for _, e := range strings.Split(values, ",") {
+			s := strings.Split(e, ":")
+			if len(s) != 2 {
+				return nil, fmt.Errorf("%q failed to parse", arg)
+			}
+			res.v[s[0]] = s[1]
+		}
+	}
+
+	return &res, nil
+}
+
+// marshalFlag converts flagMap to flag args
+func (m flagMap) marshalFlag() (string, error) {
+	var args string
+
+	argList := []string{}
+	for k, v := range m.v {
+		argList = append(argList, fmt.Sprintf("%s:%s", k, v))
+	}
+	if len(argList) > 0 {
+		args = fmt.Sprintf("={%s}", strings.Join(argList, ","))
+	}
+	return fmt.Sprintf("%s%s", m.k, args), nil
+}
+
+// Tag describes an InfluxDB tag flag
+type Tag struct {
+	Row, Tag string
+}
+
+// UnmarshalFlag is the go-flags Value UnmarshalFlag implementation for Tag
+func (t *Tag) UnmarshalFlag(arg string) error {
+	fm, err := unmarshalFlag(arg)
+	if err != nil {
+		return fmt.Errorf("%q failed to parse", err)
+	}
+	t.Row = fm.k
+	t.Tag = fm.v["tag"]
+	if t.Tag == "" {
+		t.Tag = t.Row
+	}
+	return nil
+}
+
+// MarshalFlag is the go-flags Value MarshalFlag implementation for Tag
+func (t *Tag) MarshalFlag() (string, error) {
+	m := flagMap{k: t.Row, v: map[string]string{}}
+	if t.Tag != "" {
+		m.v["tag"] = string(t.Tag)
+	}
+
+	return m.marshalFlag()
+}
+
+// FieldType describes an InfluxDB field type.
+// Field values can be floats, integers, strings, or Booleans.
+type FieldType string
+
+// All InfluxDB field types
+const (
+	FieldTypeFloat   FieldType = "float"
+	FieldTypeInteger FieldType = "int"
+	FieldTypeString  FieldType = "string"
+	FieldTypeBool    FieldType = "bool"
+)
+
+// isValid returns if the FieldType is a valid one
+func (t FieldType) isValid() bool {
+	switch t {
+	case FieldTypeFloat, FieldTypeInteger, FieldTypeString, FieldTypeBool:
+		return true
+	}
+	return false
+}
+
+// Field describes an InfluxDB field tag.
+type Field struct {
+	Row, Field string
+	FieldType  FieldType
+}
+
+// UnmarshalFlag is the go-flags Value UnmarshalFlag implementation for Field
+func (f *Field) UnmarshalFlag(arg string) error {
+	fm, err := unmarshalFlag(arg)
+	if err != nil {
+		return fmt.Errorf("%q failed to parse", err)
+	}
+
+	f.Row = fm.k
+	f.Field = fm.v["field"]
+	if f.Field == "" {
+		f.Field = f.Row
+	}
+
+	t := FieldType(fm.v["type"])
+	if !t.isValid() {
+		return fmt.Errorf("%q invalid field type", arg)
+	}
+	f.FieldType = t
+
+	return nil
+}
+
+// MarshalFlag is the go-flags Value MarshalFlag implementation for Field
+func (f *Field) MarshalFlag() (string, error) {
+	m := flagMap{k: f.Row, v: map[string]string{}}
+	if f.FieldType != "" {
+		m.v["type"] = string(f.FieldType)
+	}
+	if f.Field != "" {
+		m.v["field"] = f.Field
+	}
+
+	return m.marshalFlag()
+}
+
+// Options wraps all flags
+type Options struct {
+	Region          string        `long:"region" description:"The AWS region." required:"true"`
+	Bucket          string        `long:"bucket" description:"The AWS bucket to watch." required:"true"`
+	Prefix          string        `long:"prefix" description:"The bucket prefix."`
+	CleanObjects    bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
+	Timeout         time.Duration `long:"timeout" description:"The global timeout."`
+	InfluxServer    string        `long:"influx-server" description:"The InfluxDB server address." required:"true"`
+	InfluxToken     string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
+	InfluxOrg       string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
+	InfluxBucket    string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
+	TimestampRow    string        `long:"timestamp-Row" description:"The timestamp Row in CSV." default:"timestamp"`
+	TimestampLayout string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
+	Tags            []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo or --tag='foo={tag:bar}' to set a specific tag name."`
+	Fields          []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,field:bar}' if not specified, field is the same as row. type can be float, int, string or bool (defaults to string)."`
+}
+
+// Parse parses flags into give Option
+func Parse(opts *Options) error {
+	parser := flags.NewParser(opts, flags.Default)
+	_, err := parser.Parse()
+	return err
+}

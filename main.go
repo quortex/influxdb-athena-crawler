@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/csv"
-	"flag"
 	"fmt"
 	"io"
 	"strconv"
@@ -18,74 +17,37 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/quortex/influxdb-athena-crawler/pkg/flags"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-const timeLayout = "2006-01-02T15:04:05.000Z"
-
-var (
-	fRegion       string
-	fBucket       string
-	fPrefix       string
-	fCleanObjects bool
-	fTimeout      time.Duration
-	fInfluxServer string
-	fInfluxToken  string
-	fInfluxOrg    string
-	fInfluxBucket string
-)
+var opts flags.Options
 
 func main() {
 	start := time.Now()
 
-	flag.StringVar(&fRegion, "region", "", "The AWS region.")
-	flag.StringVar(&fBucket, "bucket", "", "The bucket to watch.")
-	flag.StringVar(&fPrefix, "prefix", "", "The bucket prefix.")
-	flag.BoolVar(&fCleanObjects, "clean-objects", false, "Whether to delete S3 objects after processing them.")
-	flag.StringVar(&fInfluxServer, "influx-server", "", "The InfluxDB server address.")
-	flag.StringVar(&fInfluxToken, "influx-token", "", "The InfluxDB token.")
-	flag.StringVar(&fInfluxOrg, "influx-org", "", "The InfluxDB org to write to.")
-	flag.StringVar(&fInfluxBucket, "influx-bucket", "", "The InfluxDB bucket write to.")
-	flag.DurationVar(&fTimeout, "timeout", 2*time.Minute, "The program timeout.")
-	flag.Parse()
-
-	// Initialize context with defined tiemout
-	ctx, cancel := context.WithTimeout(context.Background(), fTimeout)
-	defer cancel()
-	go func() {
-		<-ctx.Done()
-		log.Fatal().Msg("Timeout reached !")
-	}()
+	// Parse flags
+	if err := flags.Parse(&opts); err != nil {
+		log.Fatal().Err(err).Msg("Failed to parse flags")
+	}
 
 	// Initialize logger
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.DurationFieldUnit = time.Second
 
-	// Check flags conformity
-	if fRegion == "" {
-		log.Fatal().Msg("Required flag: region")
-	}
-	if fBucket == "" {
-		log.Fatal().Msg("Required flag: bucket")
-	}
-	if fInfluxServer == "" {
-		log.Fatal().Msg("Required flag: influx-server")
-	}
-	if fInfluxToken == "" {
-		log.Fatal().Msg("Required flag: influx-token")
-	}
-	if fInfluxOrg == "" {
-		log.Fatal().Msg("Required flag: influx-org")
-	}
-	if fInfluxBucket == "" {
-		log.Fatal().Msg("Required flag: influx-bucket")
-	}
+	// Initialize context with defined tiemout
+	ctx, cancel := context.WithTimeout(context.Background(), opts.Timeout)
+	defer cancel()
+	go func() {
+		<-ctx.Done()
+		log.Fatal().Msg("Timeout reached !")
+	}()
 
 	// Init AWS s3 client
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(fRegion)},
+		Region: aws.String(opts.Region)},
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Unable to init session")
@@ -94,8 +56,8 @@ func main() {
 
 	// List objects matching bucket / prefix
 	res, err := s3Cli.ListObjects(&s3.ListObjectsInput{
-		Bucket: aws.String(fBucket),
-		Prefix: aws.String(fPrefix),
+		Bucket: aws.String(opts.Bucket),
+		Prefix: aws.String(opts.Prefix),
 	})
 	if err != nil {
 		log.Fatal().Err(err).Msg("Unable to list objects")
@@ -112,9 +74,9 @@ func main() {
 
 	// Process each s3 object
 	dwn := s3manager.NewDownloader(sess)
-	cli := influxdb2.NewClient(fInfluxServer, fInfluxToken)
+	cli := influxdb2.NewClient(opts.InfluxServer, opts.InfluxToken)
 	defer cli.Close()
-	api := cli.WriteAPIBlocking(fInfluxOrg, fInfluxBucket)
+	api := cli.WriteAPIBlocking(opts.InfluxOrg, opts.InfluxBucket)
 	for _, item := range res.Contents {
 		o := *item
 		wg.Add(1)
@@ -163,13 +125,13 @@ func processObject(
 	// Download object
 	buf := aws.NewWriteAtBuffer([]byte{})
 	_, err := s3Dwn.DownloadWithContext(ctx, buf, &s3.GetObjectInput{
-		Bucket: aws.String(fBucket),
+		Bucket: aws.String(opts.Bucket),
 		Key:    o.Key,
 	})
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("buckey", fBucket).
+			Str("buckey", opts.Bucket).
 			Str("object", aws.StringValue(o.Key)).
 			Msg("Failed to download object")
 		return err
@@ -195,15 +157,15 @@ func processObject(
 	}
 
 	// Delete object
-	if fCleanObjects {
+	if opts.CleanObjects {
 		_, err = s3Cli.DeleteObject(&s3.DeleteObjectInput{
-			Bucket: aws.String(fBucket),
+			Bucket: aws.String(opts.Bucket),
 			Key:    o.Key,
 		})
 		if err != nil {
 			log.Error().
 				Err(err).
-				Str("bucket", fBucket).
+				Str("bucket", opts.Bucket).
 				Str("object", aws.StringValue(o.Key)).
 				Msg("Unable to delete object")
 			return err
@@ -279,18 +241,34 @@ func toPoints(rows []map[string]interface{}) ([]*write.Point, error) {
 }
 
 func toPoint(row map[string]interface{}) (*write.Point, error) {
-	t, err := time.Parse(timeLayout, fmt.Sprintf("%sT%s.000Z", row["date"], row["time"]))
+	t, err := time.Parse(opts.TimestampLayout, fmt.Sprintf("%v", row[opts.TimestampRow]))
 	if err != nil {
 		return nil, err
 	}
 
-	aud, err := strconv.Atoi(fmt.Sprintf("%v", row["audience"]))
-	if err != nil {
-		return nil, err
+	point := influxdb2.NewPointWithMeasurement("audience").SetTime(t)
+	for _, e := range opts.Tags {
+		point = point.AddTag(e.Tag, fmt.Sprintf("%v", row[e.Row]))
 	}
 
-	return influxdb2.NewPointWithMeasurement("audience").
-		SetTime(t).
-		AddTag("publishing_point", fmt.Sprintf("%v", row["publishing_point"])).
-		AddField("audience", aud), nil
+	for _, e := range opts.Fields {
+		var fieldVal interface{}
+		strField := fmt.Sprintf("%v", row[e.Row])
+		switch e.FieldType {
+		case flags.FieldTypeBool:
+			fieldVal, err = strconv.ParseBool(strField)
+		case flags.FieldTypeFloat:
+			fieldVal, err = strconv.ParseFloat(strField, 64)
+		case flags.FieldTypeInteger:
+			fieldVal, err = strconv.Atoi(strField)
+		case flags.FieldTypeString:
+			fieldVal = strField
+		}
+		if err != nil {
+			return nil, err
+		}
+		point = point.AddField(e.Field, fieldVal)
+	}
+
+	return point, nil
 }
