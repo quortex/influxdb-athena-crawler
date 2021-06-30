@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"encoding/csv"
-	"fmt"
 	"io"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -14,10 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/influxdata/influxdb-client-go/v2"
-	"github.com/influxdata/influxdb-client-go/v2/api"
-	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/quortex/influxdb-athena-crawler/pkg/flags"
+	"github.com/quortex/influxdb-athena-crawler/pkg/influxdb"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -72,17 +68,26 @@ func main() {
 	cDone := make(chan bool)
 	cErr := make(chan error)
 
-	// Process each s3 object
 	dwn := s3manager.NewDownloader(sess)
-	cli := influxdb2.NewClient(opts.InfluxServer, opts.InfluxToken)
-	defer cli.Close()
-	api := cli.WriteAPIBlocking(opts.InfluxOrg, opts.InfluxBucket)
+	influxWriter := influxdb.NewWriter(
+		opts.InfluxServer,
+		opts.InfluxToken,
+		opts.InfluxOrg,
+		opts.InfluxBucket,
+		opts.TimestampLayout,
+		opts.TimestampRow,
+		opts.Tags,
+		opts.Fields,
+	)
+	defer influxWriter.Close()
+
+	// Process each s3 object
 	for _, item := range res.Contents {
 		o := *item
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := processObject(ctx, s3Cli, dwn, api, o); err != nil {
+			if err := processObject(ctx, s3Cli, dwn, influxWriter, o); err != nil {
 				cErr <- err
 			}
 		}()
@@ -113,7 +118,7 @@ func processObject(
 	ctx context.Context,
 	s3Cli *s3.S3,
 	s3Dwn *s3manager.Downloader,
-	writeAPI api.WriteAPIBlocking,
+	influxWriter influxdb.Writer,
 	o s3.Object,
 ) error {
 	log.Info().
@@ -148,11 +153,11 @@ func processObject(
 	}
 
 	// Write records to InfluxDB
-	if err = writeRecordsToInfluxDB(ctx, writeAPI, res); err != nil {
+	if err = influxWriter.WriteRecords(ctx, res); err != nil {
 		log.Error().
 			Err(err).
 			Str("object", aws.StringValue(o.Key)).
-			Msg("Failed to write records to InfluxDB")
+			Msg("Failed to write records")
 		return err
 	}
 
@@ -175,6 +180,7 @@ func processObject(
 	return nil
 }
 
+// parseCSV parses a CSV to a map[string]interface{} slice
 func parseCSV(strCSV string) ([]map[string]interface{}, error) {
 	// Read CSV object
 	var header []string
@@ -204,71 +210,4 @@ func parseCSV(strCSV string) ([]map[string]interface{}, error) {
 	}
 
 	return res, nil
-}
-
-func writeRecordsToInfluxDB(ctx context.Context, writeAPI api.WriteAPIBlocking, rows []map[string]interface{}) error {
-	// Convert csv rows to InfluxDB points
-	points, err := toPoints(rows)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to convert CSV rows to points")
-		return err
-	}
-
-	// Write points to InfluxDB
-	err = writeAPI.WritePoint(context.Background(), points...)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to write points to InfluxDB")
-		return err
-	}
-
-	return nil
-}
-
-func toPoints(rows []map[string]interface{}) ([]*write.Point, error) {
-	res := make([]*write.Point, len(rows))
-	for i, e := range rows {
-		p, err := toPoint(e)
-		if err != nil {
-			return nil, err
-		}
-		res[i] = p
-	}
-	return res, nil
-}
-
-func toPoint(row map[string]interface{}) (*write.Point, error) {
-	t, err := time.Parse(opts.TimestampLayout, fmt.Sprintf("%v", row[opts.TimestampRow]))
-	if err != nil {
-		return nil, err
-	}
-
-	point := influxdb2.NewPointWithMeasurement("audience").SetTime(t)
-	for _, e := range opts.Tags {
-		point = point.AddTag(e.Tag, fmt.Sprintf("%v", row[e.Row]))
-	}
-
-	for _, e := range opts.Fields {
-		var fieldVal interface{}
-		strField := fmt.Sprintf("%v", row[e.Row])
-		switch e.FieldType {
-		case flags.FieldTypeBool:
-			fieldVal, err = strconv.ParseBool(strField)
-		case flags.FieldTypeFloat:
-			fieldVal, err = strconv.ParseFloat(strField, 64)
-		case flags.FieldTypeInteger:
-			fieldVal, err = strconv.Atoi(strField)
-		case flags.FieldTypeString:
-			fieldVal = strField
-		}
-		if err != nil {
-			return nil, err
-		}
-		point = point.AddField(e.Field, fieldVal)
-	}
-
-	return point, nil
 }
