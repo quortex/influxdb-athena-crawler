@@ -265,7 +265,7 @@ func TestField_MarshalFlag(t *testing.T) {
 				Row:       "bar",
 				FieldType: FieldTypeInteger,
 			},
-			want:    "foo={type:int,row:bar}",
+			want:    "foo={row:bar,type:int}",
 			wantErr: false,
 		},
 	}

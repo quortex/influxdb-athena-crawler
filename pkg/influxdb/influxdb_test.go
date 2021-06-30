@@ -79,7 +79,7 @@ func Test_toPoints(t *testing.T) {
 				tsRow:    "timestamp",
 				fields: []*flags.Field{
 					{
-						Row: "foo",
+						Row:   "foo",
 						Field: "foo",
 					},
 				},
@@ -93,15 +93,15 @@ func Test_toPoints(t *testing.T) {
 				rows: []map[string]interface{}{
 					{
 						"timestamp": "2021-06-30T13:06:18.000Z",
-						"foo": "bar",
+						"foo":       "bar",
 					},
 				},
 				tsLayout: "2006-01-02T15:04:05.000Z",
 				tsRow:    "timestamp",
 				fields: []*flags.Field{
 					{
-						Row: "foo",
-						Field: "foo",
+						Row:       "foo",
+						Field:     "foo",
 						FieldType: flags.FieldTypeBool,
 					},
 				},
