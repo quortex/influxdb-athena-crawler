@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
-	"io"
-	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/quortex/influxdb-athena-crawler/pkg/csv"
 	"github.com/quortex/influxdb-athena-crawler/pkg/flags"
 	"github.com/quortex/influxdb-athena-crawler/pkg/influxdb"
 	"github.com/rs/zerolog"
@@ -136,14 +134,14 @@ func processObject(
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("buckey", opts.Bucket).
+			Str("bucket", opts.Bucket).
 			Str("object", aws.StringValue(o.Key)).
 			Msg("Failed to download object")
 		return err
 	}
 
 	// Parse CSV to a map[string]interface{} slice
-	res, err := parseCSV(string(buf.Bytes()))
+	res, err := csv.ParseString(string(buf.Bytes()))
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -178,36 +176,4 @@ func processObject(
 	}
 
 	return nil
-}
-
-// parseCSV parses a CSV to a map[string]interface{} slice
-func parseCSV(strCSV string) ([]map[string]interface{}, error) {
-	// Read CSV object
-	var header []string
-	res := []map[string]interface{}{}
-
-	reader := csv.NewReader(strings.NewReader(strCSV))
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-
-		// First line contains header fields
-		if header == nil {
-			header = line
-			continue
-		}
-
-		// Other lines contains rows
-		row := make(map[string]interface{}, len(header))
-		for i, e := range line {
-			row[header[i]] = e
-		}
-		res = append(res, row)
-	}
-
-	return res, nil
 }
