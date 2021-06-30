@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -20,10 +21,7 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 	}{
 		{
 			name: "Unmarshal invalid flag should return an error",
-			fields: fields{
-				Row: "",
-				Tag: "",
-			},
+			fields: fields{},
 			args: args{
 				arg: "foo=%",
 			},
@@ -64,15 +62,17 @@ func TestTag_UnmarshalFlag(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tr := &Tag{
-				Row: tt.fields.Row,
-				Tag: tt.fields.Tag,
-			}
-			if err := tr.UnmarshalFlag(tt.args.arg); (err != nil) != tt.wantErr {
-				t.Errorf("Tag.UnmarshalFlag() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+		got := &Tag{}
+		want := &Tag{
+			Row: tt.fields.Row,
+			Tag: tt.fields.Tag,
+		}
+		if err := got.UnmarshalFlag(tt.args.arg); (err != nil) != tt.wantErr {
+			t.Errorf("Tag.UnmarshalFlag() error = %v, wantErr %v", err, tt.wantErr)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Tag.UnmarshalFlag() = %v, want %v", got, want)
+		}
 	}
 }
 
@@ -172,6 +172,7 @@ func TestField_UnmarshalFlag(t *testing.T) {
 			name: "Unmarshal flag with valid field type should return a properly formatted field",
 			fields: fields{
 				Row:       "foo",
+				Field:     "foo",
 				FieldType: FieldTypeInteger,
 			},
 			args: args{
@@ -187,7 +188,7 @@ func TestField_UnmarshalFlag(t *testing.T) {
 				FieldType: FieldTypeFloat,
 			},
 			args: args{
-				arg: "foo={type:float}",
+				arg: "foo={type:float,field:bar}",
 			},
 			wantErr: false,
 		},
@@ -199,20 +200,24 @@ func TestField_UnmarshalFlag(t *testing.T) {
 				FieldType: FieldTypeString,
 			},
 			args: args{
-				arg: "foo={type:string,bar:baz}",
+				arg: "foo={type:string,field:bar,bar:baz}",
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := &Field{
+			got := &Field{}
+			want := &Field{
 				Row:       tt.fields.Row,
 				Field:     tt.fields.Field,
 				FieldType: tt.fields.FieldType,
 			}
-			if err := f.UnmarshalFlag(tt.args.arg); (err != nil) != tt.wantErr {
+			if err := got.UnmarshalFlag(tt.args.arg); (err != nil) != tt.wantErr {
 				t.Errorf("Field.UnmarshalFlag() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("Field.UnmarshalFlag() = %v, want %v", got, want)
 			}
 		})
 	}
@@ -278,26 +283,6 @@ func TestField_MarshalFlag(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("Field.MarshalFlag() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestParse(t *testing.T) {
-	type args struct {
-		opts *Options
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := Parse(tt.args.opts); (err != nil) != tt.wantErr {
-				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

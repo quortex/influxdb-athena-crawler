@@ -116,18 +116,20 @@ func (f *Field) UnmarshalFlag(arg string) error {
 		return fmt.Errorf("%q failed to parse", err)
 	}
 
-	f.Row = fm.k
-	f.Field = fm.v["field"]
-	if f.Field == "" {
-		f.Field = f.Row
+	row := fm.k
+	field := fm.v["field"]
+	if field == "" {
+		field = row
 	}
 
-	t := FieldType(fm.v["type"])
-	if !t.isValid() {
+	fType := FieldType(fm.v["type"])
+	if !fType.isValid() {
 		return fmt.Errorf("%q invalid field type", arg)
 	}
-	f.FieldType = t
 
+	f.Row = row
+	f.Field = field
+	f.FieldType = fType
 	return nil
 }
 
@@ -155,7 +157,7 @@ type Options struct {
 	InfluxToken     string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
 	InfluxOrg       string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
 	InfluxBucket    string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
-	TimestampRow    string        `long:"timestamp-Row" description:"The timestamp Row in CSV." default:"timestamp"`
+	TimestampRow    string        `long:"timestamp-row" description:"The timestamp row in CSV." default:"timestamp"`
 	TimestampLayout string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
 	Tags            []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo or --tag='foo={tag:bar}' to set a specific tag name."`
 	Fields          []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,field:bar}' if not specified, field is the same as row. type can be float, int, string or bool (defaults to string)."`
