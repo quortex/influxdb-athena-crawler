@@ -5,10 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/quortex/influxdb-athena-crawler/pkg/csv"
 	"github.com/quortex/influxdb-athena-crawler/pkg/flags"
 	"github.com/quortex/influxdb-athena-crawler/pkg/influxdb"
@@ -31,7 +32,7 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.DurationFieldUnit = time.Second
 
-	// Initialize context with defined tiemout
+	// Initialize context with defined timeout
 	ctx, cancel := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancel()
 	go func() {
@@ -40,16 +41,19 @@ func main() {
 	}()
 
 	// Init AWS s3 client
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(opts.Region)},
-	)
+	// Using the SDK's default configuration, loading additional config
+	// and credentials values from the environment variables, shared
+	// credentials, and shared configuration files
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(opts.Region))
 	if err != nil {
-		log.Fatal().Err(err).Msg("Unable to init session")
+		log.Fatal().
+			Err(err).
+			Msg("unable to load SDK config")
 	}
-	s3Cli := s3.New(sess)
+	s3Cli := s3.NewFromConfig(cfg)
 
 	// List objects matching bucket / prefix
-	res, err := s3Cli.ListObjects(&s3.ListObjectsInput{
+	res, err := s3Cli.ListObjects(ctx, &s3.ListObjectsInput{
 		Bucket: aws.String(opts.Bucket),
 		Prefix: aws.String(opts.Prefix),
 	})
@@ -66,7 +70,7 @@ func main() {
 	cDone := make(chan bool)
 	cErr := make(chan error)
 
-	dwn := s3manager.NewDownloader(sess)
+	dwn := manager.NewDownloader(s3Cli)
 	influxWriter := influxdb.NewWriter(
 		opts.InfluxServer,
 		opts.InfluxToken,
@@ -81,7 +85,7 @@ func main() {
 
 	// Process each s3 object
 	for _, item := range res.Contents {
-		o := *item
+		o := item
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -114,20 +118,20 @@ func main() {
 
 func processObject(
 	ctx context.Context,
-	s3Cli *s3.S3,
-	s3Dwn *s3manager.Downloader,
+	s3Cli *s3.Client,
+	s3Dwn *manager.Downloader,
 	influxWriter influxdb.Writer,
-	o s3.Object,
+	o types.Object,
 ) error {
 	log.Info().
-		Str("object", aws.StringValue(o.Key)).
-		Time("last modified", aws.TimeValue(o.LastModified)).
-		Int64("size", aws.Int64Value(o.Size)).
+		Str("object", aws.ToString(o.Key)).
+		Time("last modified", aws.ToTime(o.LastModified)).
+		Int64("size", o.Size).
 		Msg("Processing s3 object")
 
 	// Download object
-	buf := aws.NewWriteAtBuffer([]byte{})
-	_, err := s3Dwn.DownloadWithContext(ctx, buf, &s3.GetObjectInput{
+	buf := manager.NewWriteAtBuffer([]byte{})
+	_, err := s3Dwn.Download(ctx, buf, &s3.GetObjectInput{
 		Bucket: aws.String(opts.Bucket),
 		Key:    o.Key,
 	})
@@ -135,7 +139,7 @@ func processObject(
 		log.Error().
 			Err(err).
 			Str("bucket", opts.Bucket).
-			Str("object", aws.StringValue(o.Key)).
+			Str("object", aws.ToString(o.Key)).
 			Msg("Failed to download object")
 		return err
 	}
@@ -145,7 +149,7 @@ func processObject(
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("object", aws.StringValue(o.Key)).
+			Str("object", aws.ToString(o.Key)).
 			Msg("Failed to parse CSV")
 		return err
 	}
@@ -154,14 +158,14 @@ func processObject(
 	if err = influxWriter.WriteRecords(ctx, res); err != nil {
 		log.Error().
 			Err(err).
-			Str("object", aws.StringValue(o.Key)).
+			Str("object", aws.ToString(o.Key)).
 			Msg("Failed to write records")
 		return err
 	}
 
 	// Delete object
 	if opts.CleanObjects {
-		_, err = s3Cli.DeleteObject(&s3.DeleteObjectInput{
+		_, err = s3Cli.DeleteObject(ctx, &s3.DeleteObjectInput{
 			Bucket: aws.String(opts.Bucket),
 			Key:    o.Key,
 		})
@@ -169,7 +173,7 @@ func processObject(
 			log.Error().
 				Err(err).
 				Str("bucket", opts.Bucket).
-				Str("object", aws.StringValue(o.Key)).
+				Str("object", aws.ToString(o.Key)).
 				Msg("Unable to delete object")
 			return err
 		}
