@@ -160,7 +160,7 @@ type Options struct {
 	TimestampRow    string        `long:"timestamp-row" description:"The timestamp row in CSV." default:"timestamp"`
 	TimestampLayout string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
 	Tags            []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo or --tag='foo={tag:bar}' to set a specific tag name."`
-	Fields          []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,field:bar}' if not specified, field is the same as row. type can be float, int, string or bool (defaults to string)."`
+	Fields          []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,field:bar}' if not specified, field is the same as row. type can be float, int, string or bool."`
 }
 
 // Parse parses flags into give Option
