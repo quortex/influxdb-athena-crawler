@@ -3,6 +3,7 @@ package flags
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -41,11 +42,17 @@ func unmarshalFlag(arg string) (*flagMap, error) {
 
 // marshalFlag converts flagMap to flag args
 func (m flagMap) marshalFlag() (string, error) {
-	var args string
+	// Arbitrary sorting of the keys to always have the same marshalling
+	keys := make([]string, 0, len(m.v))
+	for k := range m.v {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 
+	var args string
 	argList := []string{}
-	for k, v := range m.v {
-		argList = append(argList, fmt.Sprintf("%s:%s", k, v))
+	for _, k := range keys {
+		argList = append(argList, fmt.Sprintf("%s:%s", k, m.v[k]))
 	}
 	if len(argList) > 0 {
 		args = fmt.Sprintf("={%s}", strings.Join(argList, ","))
