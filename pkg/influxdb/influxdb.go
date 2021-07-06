@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/influxdata/influxdb-client-go/v2"
@@ -133,4 +134,83 @@ func toPoint(
 	}
 
 	return point, nil
+}
+
+// writers is a Writer implementation for multiple Writers
+type writers []Writer
+
+// NewWriters returns a Writers implementation from given parameters
+func NewWriters(
+	servers []string,
+	token, org, bucket, tsLayout, tsRow string,
+	tags []*flags.Tag,
+	fields []*flags.Field,
+) Writer {
+	w := make(writers, len(servers))
+	for i, server := range servers {
+		w[i] = NewWriter(
+			server,
+			token,
+			org,
+			bucket,
+			tsLayout,
+			tsRow,
+			tags,
+			fields,
+		)
+	}
+
+	return &w
+}
+
+// WriteRecords parses given rows and write appropriate points to InfluxDB instance
+func (w *writers) WriteRecords(ctx context.Context, rows []map[string]interface{}) error {
+	// Make waitgroup and channels to process
+	// tasks asynchronously
+	var wg sync.WaitGroup
+	cDone := make(chan bool)
+	cErr := make(chan error)
+	wg.Add(len(*w))
+
+	go func() {
+		for _, item := range *w {
+			writer := item
+			go func() {
+				defer wg.Done()
+				if err := writer.WriteRecords(ctx, rows); err != nil {
+					cErr <- err
+				}
+			}()
+		}
+		wg.Wait()
+		close(cDone)
+	}()
+
+	// Wait until either WaitGroup is done or an error is received through the channel
+	select {
+	case <-cDone:
+		break
+	case err := <-cErr:
+		return err
+	}
+
+	return nil
+}
+
+// Close closes InfluxDB client
+func (w *writers) Close() {
+	var wg sync.WaitGroup
+	wg.Add(len(*w))
+
+	go func() {
+		for _, item := range *w {
+			writer := item
+			go func() {
+				defer wg.Done()
+				writer.Close()
+			}()
+		}
+	}()
+
+	wg.Wait()
 }

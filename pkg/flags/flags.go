@@ -160,7 +160,7 @@ type Options struct {
 	Prefix          string        `long:"prefix" description:"The bucket prefix."`
 	CleanObjects    bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
 	Timeout         time.Duration `long:"timeout" description:"The global timeout."`
-	InfluxServer    string        `long:"influx-server" description:"The InfluxDB server address." required:"true"`
+	InfluxServers   []string      `long:"influx-server" description:"The InfluxDB servers addresses." required:"true"`
 	InfluxToken     string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
 	InfluxOrg       string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
 	InfluxBucket    string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
