@@ -1,6 +1,6 @@
 # influxdb-athena-crawler
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.0](https://img.shields.io/badge/AppVersion-0.2.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
 
@@ -42,7 +42,7 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | failedJobsHistoryLimit | int | `1` | The number of failed finished jobs to retain. |
 | suspend | bool | `false` | This flag tells the controller to suspend subsequent executions, it does not apply to already started executions. |
 | image.repository | string | `"eu.gcr.io/quortex-registry-public/influxdb-athena-crawler"` | influxdb-athena-crawler image repository. |
-| image.tag | string | `"0.1.0"` | influxdb-athena-crawler image tag. |
+| image.tag | string | `"0.2.0"` | influxdb-athena-crawler image tag. |
 | image.pullPolicy | string | `"IfNotPresent"` | influxdb-athena-crawler image pull policy. |
 | env | object | `{}` | Container environment variables as key values. |
 | rbac.create | bool | `true` |  |

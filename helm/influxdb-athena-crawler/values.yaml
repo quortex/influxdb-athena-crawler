@@ -63,7 +63,7 @@ image:
   # -- influxdb-athena-crawler image repository.
   repository: eu.gcr.io/quortex-registry-public/influxdb-athena-crawler
   # -- influxdb-athena-crawler image tag.
-  tag: 0.1.0
+  tag: 0.2.0
   # -- influxdb-athena-crawler image pull policy.
   pullPolicy: IfNotPresent
 
