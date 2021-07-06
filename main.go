@@ -64,12 +64,6 @@ func main() {
 		log.Info().Msg("No objects matching bucket / prefix, processing done !")
 	}
 
-	// Make waitgroup and channels to process objects
-	// tasks asynchronously
-	var wg sync.WaitGroup
-	cDone := make(chan bool)
-	cErr := make(chan error)
-
 	dwn := manager.NewDownloader(s3Cli)
 	influxWriter := influxdb.NewWriter(
 		opts.InfluxServer,
@@ -83,37 +77,32 @@ func main() {
 	)
 	defer influxWriter.Close()
 
-	// Process each s3 object
-	for _, item := range res.Contents {
-		o := item
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := processObject(ctx, s3Cli, dwn, influxWriter, o); err != nil {
-				cErr <- err
-			}
-		}()
-	}
-
-	// Wait until WaitGroup is done
+	// Make waitgroup and channels to process objects
+	// tasks asynchronously
+	var wg sync.WaitGroup
+	cDone := make(chan bool)
+	wg.Add(len(res.Contents))
 	go func() {
+		// Process each s3 object
+		for _, item := range res.Contents {
+			o := item
+			go func() {
+				defer wg.Done()
+				if err := processObject(ctx, s3Cli, dwn, influxWriter, o); err != nil {
+					log.Error().Err(err).
+						Msg("Processing error")
+				}
+			}()
+		}
+
 		wg.Wait()
 		close(cDone)
 	}()
 
-	// Wait until either WaitGroup is done or an error is received through the channel
-	select {
-	case <-cDone:
-		log.Info().
-			Dur("elapsed", time.Since(start)).
-			Msg("Processing done with succes !")
-		break
-	case err := <-cErr:
-		close(cErr)
-		log.Error().Err(err).
-			Dur("elapsed", time.Since(start)).
-			Msg("Processing error")
-	}
+	<-cDone
+	log.Info().
+		Dur("elapsed", time.Since(start)).
+		Msg("Processing ended !")
 }
 
 func processObject(
