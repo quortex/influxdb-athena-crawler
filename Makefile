@@ -27,3 +27,6 @@ lint: ## Run the linter used in CI against code.
 
 test: fmt vet ## Run tests.
 	@go test ./... -coverprofile cover.out
+
+doc: ## Generate documentation.
+	@docker run --rm --volume "${PWD}/helm/influxdb-athena-crawler:/helm-docs" jnorwood/helm-docs:latest -s file
