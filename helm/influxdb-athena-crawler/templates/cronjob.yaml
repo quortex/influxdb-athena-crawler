@@ -1,0 +1,83 @@
+{{- $fullName := include "influxdb-athena-crawler.fullname" . -}}
+{{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: batch/v1
+{{- else -}}
+apiVersion: batch/v1beta1
+{{- end }}
+kind: CronJob
+metadata:
+  name:  {{ $fullName }}
+  labels:
+    {{- include "influxdb-athena-crawler.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  suspend: {{ .Values.suspend }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "influxdb-athena-crawler.selectorLabels" . | nindent 12 }}
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ $fullName }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              args:
+                - --region={{ .Values.region }}
+                - --bucket={{ .Values.bucket }}
+                {{- with .Values.prefix }}
+                - --prefix={{ . }}
+                {{- end }}
+                - --timeout={{ .Values.timeout }}
+                {{- range .Values.influxServers }}
+                - --influx-server={{ . | quote }}
+                {{- end }}
+                - --influx-token={{ .Values.influxToken }}
+                - --influx-org={{ .Values.influxOrg }}
+                - --influx-bucket={{ .Values.influxBucket }}
+                - --timestamp-row={{ .Values.timestampRow }}
+                - --timestamp-layout={{ .Values.timestampLayout }}
+                {{- range .Values.tags }}
+                - --tag={{ . | quote }}
+                {{- end }}
+                {{- range .Values.fields }}
+                - --field={{ . | quote }}
+                {{- end }}
+                {{- if .Values.cleanObjects }}
+                - --clean-objects
+                {{- end }}
+              {{- with .Values.env }}
+              env:
+                {{- range $k, $v := . }}
+                - name: {{ $k }}
+                  value: {{ $v | quote }}
+                {{- end }}
+              {{- end }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: {{ .Values.restartPolicy }}

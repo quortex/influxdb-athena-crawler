@@ -1,0 +1,102 @@
+# Default values for influxdb-athena-crawler.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- The AWS region.
+region: ""
+
+# -- The AWS bucket to watch.
+bucket: ""
+
+# -- The bucket prefix.
+prefix: ""
+
+# -- Whether to delete S3 objects after processing them.
+cleanObjects: false
+
+# -- The global timeout.
+timeout: 10m
+
+# -- The InfluxDB servers addresses.
+influxServers: []
+
+# -- The InfluxDB token.
+influxToken: ""
+
+# -- The InfluxDB org to write to.
+influxOrg: ""
+
+# -- The InfluxDB bucket write to.
+influxBucket: ""
+
+# -- The timestamp row in CSV.
+timestampRow: "timestamp"
+
+# -- The layout to parse timestamp.
+timestampLayout: "2006-01-02T15:04:05.000Z"
+
+# -- Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row.
+tags: []
+
+# -- Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,row:bar}', if not specified, CSV row matches field name. Type can be float, int, string or bool.
+fields: []
+
+# -- The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
+schedule: "0 0 * * *"
+
+# -- Specifies how to treat concurrent executions of a Job (Allow / Forbid / Replace).
+concurrencyPolicy: Forbid
+
+# -- Specifies the number of retries before marking a job as failed.
+backoffLimit: 6
+
+# -- The number of successful finished jobs to retain.
+successfulJobsHistoryLimit: 3
+
+# -- The number of failed finished jobs to retain.
+failedJobsHistoryLimit: 1
+
+# -- This flag tells the controller to suspend subsequent executions, it does not apply to already started executions.
+suspend: false
+
+image:
+  # -- influxdb-athena-crawler image repository.
+  repository: eu.gcr.io/quortex-registry-public/influxdb-athena-crawler
+  # -- influxdb-athena-crawler image tag.
+  tag: 0.2.0
+  # -- influxdb-athena-crawler image pull policy.
+  pullPolicy: IfNotPresent
+
+# -- Container environment variables as key values.
+env: {}
+
+rbac:
+  # -- Specifies whether rbac resources should be created.
+  create: true
+
+# -- influxdb-athena-crawler restartPolicy (supported values: "OnFailure", "Never").
+restartPolicy: OnFailure
+
+# -- A list of secrets used to pull containers images.
+imagePullSecrets: []
+
+# -- Helm's name computing override.
+nameOverride: ""
+
+# -- Helm's fullname computing override.
+fullnameOverride: ""
+
+# -- influxdb-athena-crawler container required resources.
+resources: {}
+
+# -- Annotations to be added to pods.
+podAnnotations: {}
+
+# -- Node labels for influxdb-athena-crawler pod assignment.
+nodeSelector: {}
+
+# -- Node tolerations for influxdb-athena-crawler scheduling to nodes with taints.
+tolerations: []
+
+# -- Affinity for influxdb-athena-crawler pod assignment.
+affinity: {}

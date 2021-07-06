@@ -1,0 +1,9 @@
+{{- if .Values.rbac.create -}}
+{{- $fullName := include "influxdb-athena-crawler.fullname" . -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "influxdb-athena-crawler.labels" . | nindent 4 }}
+{{- end }}
