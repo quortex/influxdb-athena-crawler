@@ -45,7 +45,7 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | image.tag | string | `"0.2.0"` | influxdb-athena-crawler image tag. |
 | image.pullPolicy | string | `"IfNotPresent"` | influxdb-athena-crawler image pull policy. |
 | env | object | `{}` | Container environment variables as key values. |
-| rbac.create | bool | `true` |  |
+| rbac.create | bool | `true` | Specifies whether rbac resources should be created. |
 | restartPolicy | string | `"OnFailure"` | influxdb-athena-crawler restartPolicy (supported values: "OnFailure", "Never"). |
 | imagePullSecrets | list | `[]` | A list of secrets used to pull containers images. |
 | nameOverride | string | `""` | Helm's name computing override. |

@@ -71,7 +71,7 @@ image:
 env: {}
 
 rbac:
-  # Specifies whether rbac resources should be created.
+  # -- Specifies whether rbac resources should be created.
   create: true
 
 # -- influxdb-athena-crawler restartPolicy (supported values: "OnFailure", "Never").
