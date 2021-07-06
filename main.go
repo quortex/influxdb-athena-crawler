@@ -65,8 +65,8 @@ func main() {
 	}
 
 	dwn := manager.NewDownloader(s3Cli)
-	influxWriter := influxdb.NewWriter(
-		opts.InfluxServer,
+	influxWriter := influxdb.NewWriters(
+		opts.InfluxServers,
 		opts.InfluxToken,
 		opts.InfluxOrg,
 		opts.InfluxBucket,
