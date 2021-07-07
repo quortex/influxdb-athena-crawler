@@ -1,8 +1,39 @@
 # influxdb-athena-crawler
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.0](https://img.shields.io/badge/AppVersion-0.2.0-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.0](https://img.shields.io/badge/AppVersion-0.2.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
+
+## Overview
+This project is a utility designed to get AWS Athena results (CSV objects stored in AWS S3), parse them and write InfluxDB points.
+
+## Prerequisites
+
+### <a id="Prerequisites_AWS"></a>AWS
+To be used with AWS and interact with the s3 bucket, an AWS account with the following permissions on s3 is required (note that `s3:DeleteObject` is only required if clean-objects is set):
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListBucket"
+        ],
+        "Resource" : "<BUCKET_NAME>"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListObjects",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ],
+        "Resource" : "<BUCKET_NAME>/*"
+      }
+    ]
+  }
+```
 
 ## Installation
 
@@ -35,6 +66,7 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | timestampLayout | string | `"2006-01-02T15:04:05.000Z"` | The layout to parse timestamp. |
 | tags | list | `[]` |  |
 | fields | list | `[]` |  |
+| awsCredsSecret | string | `"aws-creds"` | A reference to a secret wit AWS credentials (must contain awsKeyId / awsSecretKey). |
 | schedule | string | `"0 0 * * *"` | The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron. |
 | concurrencyPolicy | string | `"Forbid"` | Specifies how to treat concurrent executions of a Job (Allow / Forbid / Replace). |
 | backoffLimit | int | `6` | Specifies the number of retries before marking a job as failed. |
@@ -44,7 +76,6 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | image.repository | string | `"eu.gcr.io/quortex-registry-public/influxdb-athena-crawler"` | influxdb-athena-crawler image repository. |
 | image.tag | string | `"0.2.0"` | influxdb-athena-crawler image tag. |
 | image.pullPolicy | string | `"IfNotPresent"` | influxdb-athena-crawler image pull policy. |
-| env | object | `{}` | Container environment variables as key values. |
 | rbac.create | bool | `true` | Specifies whether rbac resources should be created. |
 | restartPolicy | string | `"OnFailure"` | influxdb-athena-crawler restartPolicy (supported values: "OnFailure", "Never"). |
 | imagePullSecrets | list | `[]` | A list of secrets used to pull containers images. |
