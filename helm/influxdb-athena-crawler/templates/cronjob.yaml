@@ -59,13 +59,19 @@ spec:
                 {{- if .Values.cleanObjects }}
                 - --clean-objects
                 {{- end }}
-              {{- with .Values.env }}
               env:
-                {{- range $k, $v := . }}
-                - name: {{ $k }}
-                  value: {{ $v | quote }}
-                {{- end }}
-              {{- end }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      key: awsKeyId
+                      name: {{ .Values.awsCredsSecret }}
+                      optional: true
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: awsSecretKey
+                      name: {{ .Values.awsCredsSecret }}
+                      optional: true
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
           {{- with .Values.nodeSelector }}

@@ -4,6 +4,40 @@ An AWS Athena crawler for InfluxDB.
 ## Overview
 This project is a utility designed to get AWS Athena results (CSV objects stored in AWS S3), parse them and write InfluxDB points.
 
+## Prerequisites
+
+### <a id="Prerequisites_AWS"></a>AWS
+To be used with AWS and interact with the s3 bucket, an AWS account with the following permissions on s3 is required (note that `s3:DeleteObject` is only required if clean-objects is set):
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListBucket"
+        ],
+        "Resource" : "<BUCKET_NAME>"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListObjects",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ],
+        "Resource" : "<BUCKET_NAME>/*"
+      }
+    ]
+  }
+```
+
+## Installation
+
+### Helm (Kubernetes install)
+
+Follow influxdb-athena-crawler documentation for Helm deployment [here](./helm/influxdb-athena-crawler).
+
 ## Configuration
 
 ### <a id="Configuration_Optional_args"></a>Optional args

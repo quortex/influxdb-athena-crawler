@@ -41,6 +41,9 @@ tags: []
 # -- Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,row:bar}', if not specified, CSV row matches field name. Type can be float, int, string or bool.
 fields: []
 
+# -- A reference to a secret wit AWS credentials (must contain awsKeyId / awsSecretKey).
+awsCredsSecret: "aws-creds"
+
 # -- The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
 schedule: "0 0 * * *"
 
@@ -66,9 +69,6 @@ image:
   tag: 0.2.0
   # -- influxdb-athena-crawler image pull policy.
   pullPolicy: IfNotPresent
-
-# -- Container environment variables as key values.
-env: {}
 
 rbac:
   # -- Specifies whether rbac resources should be created.
