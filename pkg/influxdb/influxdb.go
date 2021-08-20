@@ -54,6 +54,11 @@ func (w *writer) WriteRecords(ctx context.Context, rows []map[string]interface{}
 		return fmt.Errorf("Failed to convert CSV rows to points: %s", err)
 	}
 
+	// No points to write, return immediately
+	if len(points) == 0 {
+		return nil
+	}
+
 	// Write points to InfluxDB
 	err = w.api.WritePoint(context.Background(), points...)
 	if err != nil {
