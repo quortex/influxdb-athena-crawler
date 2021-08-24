@@ -1,0 +1,9 @@
+{{- $rootName := include "influxdb-athena-crawler.fullname" . -}}
+{{- range $k, $v := .Values.crawlers }}
+  {{- $_ := set $v "rootName" $rootName }}
+  {{- $_ := set $v "nameOverride" $k }}
+  {{- $_ := merge $v $.Values.defaults }}
+  {{- $values := dict "Values" $v "Chart" $.Chart "Release" $.Release "Capabilities" $.Capabilities }}
+  {{- include "influxdb-athena-crawler.cronjob" $values }}
+---
+{{ end }}
