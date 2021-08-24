@@ -1,3 +1,4 @@
+{{- define "influxdb-athena-crawler.cronjob" -}}
 {{- $fullName := include "influxdb-athena-crawler.fullname" . -}}
 {{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: batch/v1
@@ -30,7 +31,7 @@ spec:
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          serviceAccountName: {{ $fullName }}
+          serviceAccountName: {{ .Values.rootName }}
           containers:
             - name: {{ .Chart.Name }}
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -87,3 +88,4 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           restartPolicy: {{ .Values.restartPolicy }}
+{{- end }}
