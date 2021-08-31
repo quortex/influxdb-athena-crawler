@@ -30,6 +30,9 @@ defaults:
   # -- The InfluxDB bucket write to.
   influxBucket: ""
 
+  # -- The InfluxDB bucket measurement.
+  measurement: ""
+
   # -- The timestamp row in CSV.
   timestampRow: "timestamp"
 
