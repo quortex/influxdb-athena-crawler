@@ -164,6 +164,7 @@ type Options struct {
 	InfluxToken     string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
 	InfluxOrg       string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
 	InfluxBucket    string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
+	Measurement     string        `long:"measurement" description:"A measurement acts as a container for tags, fields, and timestamps. Use a measurement name that describes your data." required:"true"`
 	TimestampRow    string        `long:"timestamp-row" description:"The timestamp row in CSV." default:"timestamp"`
 	TimestampLayout string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
 	Tags            []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row."`

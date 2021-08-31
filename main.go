@@ -70,6 +70,7 @@ func main() {
 		opts.InfluxToken,
 		opts.InfluxOrg,
 		opts.InfluxBucket,
+		opts.Measurement,
 		opts.TimestampLayout,
 		opts.TimestampRow,
 		opts.Tags,
