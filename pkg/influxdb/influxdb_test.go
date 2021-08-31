@@ -12,11 +12,12 @@ import (
 
 func Test_toPoints(t *testing.T) {
 	type args struct {
-		rows     []map[string]interface{}
-		tsLayout string
-		tsRow    string
-		tags     []*flags.Tag
-		fields   []*flags.Field
+		rows        []map[string]interface{}
+		measurement string
+		tsLayout    string
+		tsRow       string
+		tags        []*flags.Tag
+		fields      []*flags.Field
 	}
 	tests := []struct {
 		name    string
@@ -110,7 +111,7 @@ func Test_toPoints(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Timestamp should be formatted correctly",
+			name: "Measurement should be set",
 			args: args{
 				rows: []map[string]interface{}{
 					{
@@ -122,8 +123,25 @@ func Test_toPoints(t *testing.T) {
 				tags:     nil,
 				fields:   nil,
 			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Timestamp should be formatted correctly",
+			args: args{
+				rows: []map[string]interface{}{
+					{
+						"timestamp": "2021-06-30T13:06:18.000Z",
+					},
+				},
+				measurement: "foo",
+				tsLayout:    "2006-01-02T15:04:05.000Z",
+				tsRow:       "timestamp",
+				tags:        nil,
+				fields:      nil,
+			},
 			want: []*write.Point{
-				influxdb2.NewPointWithMeasurement("audience").
+				influxdb2.NewPointWithMeasurement("foo").
 					SetTime(time.Date(2021, 6, 30, 13, 6, 18, 0, time.UTC)),
 			},
 			wantErr: false,
@@ -151,8 +169,9 @@ func Test_toPoints(t *testing.T) {
 						"fieldString": "bar",
 					},
 				},
-				tsLayout: "2006-01-02T15:04:05.000Z",
-				tsRow:    "timestamp",
+				measurement: "foo",
+				tsLayout:    "2006-01-02T15:04:05.000Z",
+				tsRow:       "timestamp",
 				tags: []*flags.Tag{
 					{
 						Row: "tag1Row",
@@ -187,7 +206,7 @@ func Test_toPoints(t *testing.T) {
 				},
 			},
 			want: []*write.Point{
-				influxdb2.NewPointWithMeasurement("audience").
+				influxdb2.NewPointWithMeasurement("foo").
 					SetTime(time.Date(2022, 6, 30, 13, 6, 18, 0, time.UTC)).
 					AddTag("tag1Foo", "row1tag1Value").
 					AddTag("tag2Foo", "row1tag2Value").
@@ -195,7 +214,7 @@ func Test_toPoints(t *testing.T) {
 					AddField("fieldIntFoo", 64).
 					AddField("fieldFloatFoo", 12.76).
 					AddField("fieldStringFoo", "foo"),
-				influxdb2.NewPointWithMeasurement("audience").
+				influxdb2.NewPointWithMeasurement("foo").
 					SetTime(time.Date(2022, 6, 30, 13, 6, 18, 0, time.UTC)).
 					AddTag("tag1Foo", "row2tag1Value").
 					AddTag("tag2Foo", "row2tag2Value").
@@ -209,7 +228,7 @@ func Test_toPoints(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := toPoints(tt.args.rows, tt.args.tsLayout, tt.args.tsRow, tt.args.tags, tt.args.fields)
+			got, err := toPoints(tt.args.rows, tt.args.measurement, tt.args.tsLayout, tt.args.tsRow, tt.args.tags, tt.args.fields)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("toPoints() error = %v, wantErr %v", err, tt.wantErr)
 				return

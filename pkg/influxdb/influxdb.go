@@ -23,6 +23,7 @@ type Writer interface {
 type writer struct {
 	cli             influxdb2.Client
 	api             api.WriteAPIBlocking
+	measurement     string
 	tsLayout, tsRow string
 	tags            []*flags.Tag
 	fields          []*flags.Field
@@ -30,28 +31,29 @@ type writer struct {
 
 // NewWriter returns an Writer implementation from given parameters
 func NewWriter(
-	server, token, org, bucket, tsLayout, tsRow string,
+	server, token, org, bucket, measurement, tsLayout, tsRow string,
 	tags []*flags.Tag,
 	fields []*flags.Field,
 ) Writer {
 	cli := influxdb2.NewClient(server, token)
 	api := cli.WriteAPIBlocking(org, bucket)
 	return &writer{
-		cli:      cli,
-		api:      api,
-		tsLayout: tsLayout,
-		tsRow:    tsRow,
-		tags:     tags,
-		fields:   fields,
+		cli:         cli,
+		api:         api,
+		measurement: measurement,
+		tsLayout:    tsLayout,
+		tsRow:       tsRow,
+		tags:        tags,
+		fields:      fields,
 	}
 }
 
 // WriteRecords parses given rows and write appropriate points to InfluxDB instance
 func (w *writer) WriteRecords(ctx context.Context, rows []map[string]interface{}) error {
 	// Convert csv rows to InfluxDB points
-	points, err := toPoints(rows, w.tsLayout, w.tsRow, w.tags, w.fields)
+	points, err := toPoints(rows, w.measurement, w.tsLayout, w.tsRow, w.tags, w.fields)
 	if err != nil {
-		return fmt.Errorf("Failed to convert CSV rows to points: %s", err)
+		return fmt.Errorf("failed to convert CSV rows to points: %s", err)
 	}
 
 	// No points to write, return immediately
@@ -62,7 +64,7 @@ func (w *writer) WriteRecords(ctx context.Context, rows []map[string]interface{}
 	// Write points to InfluxDB
 	err = w.api.WritePoint(context.Background(), points...)
 	if err != nil {
-		return fmt.Errorf("Failed to write points to InfluxDB: %s", err)
+		return fmt.Errorf("failed to write points to InfluxDB: %s", err)
 	}
 
 	return nil
@@ -76,6 +78,7 @@ func (w *writer) Close() {
 // toPoints converts rows slice to InfluxDB points slice
 func toPoints(
 	rows []map[string]interface{},
+	measurement string,
 	tsLayout, tsRow string,
 	tags []*flags.Tag,
 	fields []*flags.Field,
@@ -85,7 +88,7 @@ func toPoints(
 	}
 	res := make([]*write.Point, len(rows))
 	for i, e := range rows {
-		p, err := toPoint(e, tsLayout, tsRow, tags, fields)
+		p, err := toPoint(e, measurement, tsLayout, tsRow, tags, fields)
 		if err != nil {
 			return nil, err
 		}
@@ -97,6 +100,7 @@ func toPoints(
 // toPoints converts rows to InfluxDB points
 func toPoint(
 	row map[string]interface{},
+	measurement string,
 	tsLayout, tsRow string,
 	tags []*flags.Tag,
 	fields []*flags.Field,
@@ -106,11 +110,15 @@ func toPoint(
 		return nil, err
 	}
 
-	point := influxdb2.NewPointWithMeasurement("audience").SetTime(t)
+	if measurement == "" {
+		return nil, fmt.Errorf("invalid measurement: measurement required")
+	}
+
+	point := influxdb2.NewPointWithMeasurement(measurement).SetTime(t)
 	for _, e := range tags {
 		val, ok := row[e.Row]
 		if !ok {
-			return nil, fmt.Errorf("Invalid row for tag: %s", e.Row)
+			return nil, fmt.Errorf("invalid row for tag: %s", e.Row)
 		}
 		point = point.AddTag(e.Tag, fmt.Sprintf("%v", val))
 	}
@@ -118,7 +126,7 @@ func toPoint(
 	for _, e := range fields {
 		val, ok := row[e.Row]
 		if !ok {
-			return nil, fmt.Errorf("Invalid row for field: %s", e.Row)
+			return nil, fmt.Errorf("invalid row for field: %s", e.Row)
 		}
 		var fieldVal interface{}
 		strField := fmt.Sprintf("%v", val)
@@ -147,7 +155,7 @@ type writers []Writer
 // NewWriters returns a Writers implementation from given parameters
 func NewWriters(
 	servers []string,
-	token, org, bucket, tsLayout, tsRow string,
+	token, org, bucket, measurement, tsLayout, tsRow string,
 	tags []*flags.Tag,
 	fields []*flags.Field,
 ) Writer {
@@ -158,6 +166,7 @@ func NewWriters(
 			token,
 			org,
 			bucket,
+			measurement,
 			tsLayout,
 			tsRow,
 			tags,
