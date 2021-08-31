@@ -1,6 +1,6 @@
 # influxdb-athena-crawler
 
-![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.1](https://img.shields.io/badge/AppVersion-0.2.1-informational?style=flat-square)
+![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.3.0](https://img.shields.io/badge/AppVersion-0.3.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
 
@@ -62,6 +62,7 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | defaults.influxToken | string | `""` | The InfluxDB token. |
 | defaults.influxOrg | string | `""` | The InfluxDB org to write to. |
 | defaults.influxBucket | string | `""` | The InfluxDB bucket write to. |
+| defaults.measurement | string | `""` | The InfluxDB bucket measurement. |
 | defaults.timestampRow | string | `"timestamp"` | The timestamp row in CSV. |
 | defaults.timestampLayout | string | `"2006-01-02T15:04:05.000Z"` | The layout to parse timestamp. |
 | defaults.tags | list | `[]` |  |

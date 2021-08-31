@@ -49,6 +49,7 @@ spec:
                 - --influx-token={{ .Values.influxToken }}
                 - --influx-org={{ .Values.influxOrg }}
                 - --influx-bucket={{ .Values.influxBucket }}
+                - --measurement={{ .Values.measurement }}
                 - --timestamp-row={{ .Values.timestampRow }}
                 - --timestamp-layout={{ .Values.timestampLayout }}
                 {{- range .Values.tags }}
