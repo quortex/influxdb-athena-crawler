@@ -9,5 +9,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.14.0
 	github.com/influxdata/influxdb-client-go/v2 v2.5.0
 	github.com/jessevdk/go-flags v1.5.0
-	github.com/rs/zerolog v1.24.0
+	github.com/rs/zerolog v1.25.0
 )
