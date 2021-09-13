@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.9.0
 	github.com/aws/aws-sdk-go-v2/config v1.7.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.5.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.14.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.15.1
 	github.com/influxdata/influxdb-client-go/v2 v2.5.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/rs/zerolog v1.24.0
