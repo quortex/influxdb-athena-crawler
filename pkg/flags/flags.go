@@ -159,7 +159,7 @@ type Options struct {
 	Bucket          string        `long:"bucket" description:"The AWS bucket to watch." required:"true"`
 	Prefix          string        `long:"prefix" description:"The bucket prefix."`
 	CleanObjects    bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
-	Timeout         time.Duration `long:"timeout" description:"The global timeout."`
+	Timeout         time.Duration `long:"timeout" description:"The global timeout." default:"30s"`
 	InfluxServers   []string      `long:"influx-server" description:"The InfluxDB servers addresses." required:"true"`
 	InfluxToken     string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
 	InfluxOrg       string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
