@@ -118,7 +118,7 @@ func toPoint(
 	for _, e := range tags {
 		val, ok := row[e.Row]
 		if !ok {
-			return nil, fmt.Errorf("invalid row for tag: %s", e.Row)
+			continue
 		}
 		point = point.AddTag(e.Tag, fmt.Sprintf("%v", val))
 	}
@@ -126,7 +126,7 @@ func toPoint(
 	for _, e := range fields {
 		val, ok := row[e.Row]
 		if !ok {
-			return nil, fmt.Errorf("invalid row for field: %s", e.Row)
+			continue
 		}
 		var fieldVal interface{}
 		strField := fmt.Sprintf("%v", val)
