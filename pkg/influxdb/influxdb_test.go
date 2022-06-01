@@ -48,47 +48,6 @@ func Test_toPoints(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Missing row for tag should return an error",
-			args: args{
-				rows: []map[string]interface{}{
-					{
-						"timestamp": "2021-06-30T13:06:18.000Z",
-					},
-				},
-				tsLayout: "2006-01-02T15:04:05.000Z",
-				tsRow:    "timestamp",
-				tags: []*flags.Tag{
-					{
-						Row: "foo",
-						Tag: "foo",
-					},
-				},
-				fields: nil,
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "Missing row for field should return an error",
-			args: args{
-				rows: []map[string]interface{}{
-					{
-						"timestamp": "2021-06-30T13:06:18.000Z",
-					},
-				},
-				tsLayout: "2006-01-02T15:04:05.000Z",
-				tsRow:    "timestamp",
-				fields: []*flags.Field{
-					{
-						Row:   "foo",
-						Field: "foo",
-					},
-				},
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
 			name: "Invalid field type should return an error",
 			args: args{
 				rows: []map[string]interface{}{
@@ -143,6 +102,49 @@ func Test_toPoints(t *testing.T) {
 			want: []*write.Point{
 				influxdb2.NewPointWithMeasurement("foo").
 					SetTime(time.Date(2021, 6, 30, 13, 6, 18, 0, time.UTC)),
+			},
+			wantErr: false,
+		},
+		{
+			name: "Missing row for tag or field should be ignored",
+			args: args{
+				rows: []map[string]interface{}{
+					{
+						"timestamp": "2022-06-30T13:06:18.000Z",
+						"foo":       "bar",
+					},
+				},
+				measurement: "foo",
+				tsLayout:    "2006-01-02T15:04:05.000Z",
+				tsRow:       "timestamp",
+				tags: []*flags.Tag{
+					{
+						Row: "foo",
+						Tag: "foo",
+					},
+					{
+						Row: "bar",
+						Tag: "bar",
+					},
+				},
+				fields: []*flags.Field{
+					{
+						Row:       "foo",
+						Field:     "foo",
+						FieldType: flags.FieldTypeString,
+					},
+					{
+						Row:       "baz",
+						Field:     "baz",
+						FieldType: flags.FieldTypeString,
+					},
+				},
+			},
+			want: []*write.Point{
+				influxdb2.NewPointWithMeasurement("foo").
+					SetTime(time.Date(2022, 6, 30, 13, 6, 18, 0, time.UTC)).
+					AddTag("foo", "bar").
+					AddField("foo", "bar"),
 			},
 			wantErr: false,
 		},
