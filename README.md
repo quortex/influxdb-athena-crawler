@@ -46,6 +46,7 @@ influxdb-athena-crawler takes as argument the parameters below.
 | region | The AWS region. | `""` |
 | bucket | The AWS bucket to watch. | `""` |
 | prefix | The bucket prefix. | `""` |
+| suffix | Filename suffix to restrict files processed on the bucket. | `""` |
 | clean-objects | Whether to delete S3 objects after processing them. | `false` |
 | timeout | The global timeout. | `"30s"` |
 | influx-server | The InfluxDB server address. | `""` |

@@ -12,6 +12,9 @@ defaults:
   # -- The bucket prefix.
   prefix: ""
 
+  # -- The bucket files suffix.
+  suffix: ""
+
   # -- Whether to delete S3 objects after processing them.
   cleanObjects: false
 
@@ -37,7 +40,7 @@ defaults:
   timestampRow: "timestamp"
 
   # -- The layout to parse timestamp.
-  timestampLayout: "2006-01-02T15:04:05.000Z"
+  timestampLayout: "2006-01-02 15:04:05.000Z"
 
   # -- Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row.
   tags: []

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -60,7 +61,10 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Unable to list objects")
 	}
-	if len(res.Contents) == 0 {
+
+	filtered_res := filterBucketContent(*res, opts.Suffix)
+
+	if len(filtered_res.Contents) == 0 {
 		log.Info().Msg("No objects matching bucket / prefix, processing done !")
 	}
 
@@ -82,10 +86,10 @@ func main() {
 	// tasks asynchronously
 	var wg sync.WaitGroup
 	cDone := make(chan bool)
-	wg.Add(len(res.Contents))
+	wg.Add(len(filtered_res.Contents))
 	go func() {
 		// Process each s3 object
-		for _, item := range res.Contents {
+		for _, item := range filtered_res.Contents {
 			o := item
 			go func() {
 				defer wg.Done()
@@ -104,6 +108,18 @@ func main() {
 	log.Info().
 		Dur("elapsed", time.Since(start)).
 		Msg("Processing ended !")
+}
+
+func filterBucketContent(elems s3.ListObjectsOutput, suffix string) (ret s3.ListObjectsOutput) {
+	if len(suffix) == 0 {
+		return elems
+	}
+	for _, s := range elems.Contents {
+		if strings.HasSuffix(*s.Key, suffix) {
+			ret.Contents = append(ret.Contents, s)
+		}
+	}
+	return ret
 }
 
 func processObject(

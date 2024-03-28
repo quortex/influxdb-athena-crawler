@@ -158,6 +158,7 @@ type Options struct {
 	Region          string        `long:"region" description:"The AWS region." required:"true"`
 	Bucket          string        `long:"bucket" description:"The AWS bucket to watch." required:"true"`
 	Prefix          string        `long:"prefix" description:"The bucket prefix."`
+	Suffix          string        `long:"suffix" description:"Filename suffix to limit files read on the bucket."`
 	CleanObjects    bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
 	Timeout         time.Duration `long:"timeout" description:"The global timeout." default:"30s"`
 	InfluxServers   []string      `long:"influx-server" description:"The InfluxDB servers addresses." required:"true"`
