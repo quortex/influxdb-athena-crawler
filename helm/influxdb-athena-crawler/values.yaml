@@ -12,6 +12,9 @@ defaults:
   # -- The bucket prefix.
   prefix: ""
 
+  # -- The bucket files suffix.
+  suffix: ""
+
   # -- Whether to delete S3 objects after processing them.
   cleanObjects: false
 
