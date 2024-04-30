@@ -140,6 +140,8 @@ func main() {
 }
 
 func filterBucketContent(elems s3.ListObjectsOutput, suffix string, processedFlagSuffix string) (unprocessed s3.ListObjectsOutput, processed s3.ListObjectsOutput) {
+	// Rely on .processed files present on the bucket to detect which csv
+	// have already been pushed to influx and which have yet to be processed
 	csvFiles := []types.Object{}
 	processedElems := []string{}
 
@@ -213,7 +215,7 @@ func processObject(
 		return err
 	}
 
-	// Add .processed file to S3 bucket
+	// Add .processed file to S3 bucket to avoid writing the same file to influx twice.
 	markerFileName := strings.Replace(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix, -1)
 	if _, err = s3Upl.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(opts.Bucket),
