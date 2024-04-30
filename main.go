@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -62,13 +64,15 @@ func main() {
 		log.Fatal().Err(err).Msg("Unable to list objects")
 	}
 
-	filtered_res := filterBucketContent(*res, opts.Suffix)
+	unproc_csvs, proc_csvs := filterBucketContent(*res, opts.Suffix, opts.ProcessedFlagSuffix)
 
-	if len(filtered_res.Contents) == 0 {
+	if len(proc_csvs.Contents)+len(unproc_csvs.Contents) == 0 {
 		log.Info().Msg("No objects matching bucket / prefix, processing done !")
+		return
 	}
 
 	dwn := manager.NewDownloader(s3Cli)
+	upl := manager.NewUploader(s3Cli)
 	influxWriter := influxdb.NewWriters(
 		opts.InfluxServers,
 		opts.InfluxToken,
@@ -84,48 +88,88 @@ func main() {
 
 	// Make waitgroup and channels to process objects
 	// tasks asynchronously
-	var wg sync.WaitGroup
-	cDone := make(chan bool)
-	wg.Add(len(filtered_res.Contents))
-	go func() {
-		// Process each s3 object
-		for _, item := range filtered_res.Contents {
-			o := item
-			go func() {
-				defer wg.Done()
-				if err := processObject(ctx, s3Cli, dwn, influxWriter, o); err != nil {
-					log.Error().Err(err).
-						Msg("Processing error")
-				}
-			}()
-		}
+	if len(unproc_csvs.Contents) > 0 {
+		var wg sync.WaitGroup
+		cDone := make(chan bool)
+		wg.Add(len(unproc_csvs.Contents))
+		go func() {
+			// Process each s3 object
+			for _, item := range unproc_csvs.Contents {
+				o := item
+				go func() {
+					defer wg.Done()
+					if err := processObject(ctx, dwn, upl, influxWriter, o); err != nil {
+						log.Error().Err(err).
+							Msg("Processing error")
+					}
+				}()
+			}
 
-		wg.Wait()
-		close(cDone)
-	}()
+			wg.Wait()
+			close(cDone)
+		}()
+		<-cDone
+	}
 
-	<-cDone
+	if opts.CleanObjects && len(proc_csvs.Contents) > 0 {
+		var wgClean sync.WaitGroup
+		cCleanDone := make(chan bool)
+		wgClean.Add(len(proc_csvs.Contents))
+		go func() {
+			// Process each s3 object
+			for _, item := range proc_csvs.Contents {
+				o := item
+				go func() {
+					defer wgClean.Done()
+					if err := cleanObject(ctx, s3Cli, o); err != nil {
+						log.Error().Err(err).
+							Msg("Processing error")
+					}
+				}()
+			}
+
+			wgClean.Wait()
+			close(cCleanDone)
+		}()
+		<-cCleanDone
+	}
+
 	log.Info().
 		Dur("elapsed", time.Since(start)).
 		Msg("Processing ended !")
 }
 
-func filterBucketContent(elems s3.ListObjectsOutput, suffix string) (ret s3.ListObjectsOutput) {
+func filterBucketContent(elems s3.ListObjectsOutput, suffix string, processedFlagSuffix string) (unprocessed s3.ListObjectsOutput, processed s3.ListObjectsOutput) {
+	csvFiles := []types.Object{}
+	processedElems := []string{}
+
 	if len(suffix) == 0 {
-		return elems
+		return unprocessed, processed
 	}
 	for _, s := range elems.Contents {
 		if strings.HasSuffix(*s.Key, suffix) {
-			ret.Contents = append(ret.Contents, s)
+			csvFiles = append(csvFiles, s)
+		}
+		if strings.HasSuffix(*s.Key, processedFlagSuffix) {
+			processedElems = append(processedElems, strings.Replace(*s.Key, processedFlagSuffix, suffix, -1))
 		}
 	}
-	return ret
+
+	for _, o := range csvFiles {
+		if !slices.Contains(processedElems, *o.Key) {
+			unprocessed.Contents = append(unprocessed.Contents, o)
+		} else {
+			processed.Contents = append(processed.Contents, o)
+		}
+	}
+
+	return unprocessed, processed
 }
 
 func processObject(
 	ctx context.Context,
-	s3Cli *s3.Client,
 	s3Dwn *manager.Downloader,
+	s3Upl *manager.Uploader,
 	influxWriter influxdb.Writer,
 	o types.Object,
 ) error {
@@ -169,9 +213,36 @@ func processObject(
 		return err
 	}
 
-	// Delete object
-	if opts.CleanObjects {
-		_, err = s3Cli.DeleteObject(ctx, &s3.DeleteObjectInput{
+	// Add .processed file to S3 bucket
+	markerFileName := strings.Replace(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix, -1)
+	if _, err = s3Upl.Upload(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(opts.Bucket),
+		Key:    &markerFileName,
+		Body:   bytes.NewReader([]byte{0}),
+	}); err != nil {
+		log.Error().
+			Err(err).
+			Str("object", aws.ToString(o.Key)).
+			Msg("Failed to create .processed file")
+		return err
+	}
+	return nil
+}
+
+func cleanObject(
+	ctx context.Context,
+	s3Cli *s3.Client,
+	o types.Object,
+) error {
+	if time.Since(aws.ToTime(o.LastModified)) > opts.S3MaxFileAge {
+		// Delete object
+		log.Info().
+			Str("object", aws.ToString(o.Key)).
+			Time("last modified", aws.ToTime(o.LastModified)).
+			Int64("size", o.Size).
+			Msg("Cleaning s3 object")
+
+		_, err := s3Cli.DeleteObject(ctx, &s3.DeleteObjectInput{
 			Bucket: aws.String(opts.Bucket),
 			Key:    o.Key,
 		})
@@ -183,7 +254,20 @@ func processObject(
 				Msg("Unable to delete object")
 			return err
 		}
-	}
 
+		markerFileName := strings.Replace(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix, -1)
+		_, err = s3Cli.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(opts.Bucket),
+			Key:    &markerFileName,
+		})
+		if err != nil {
+			log.Error().
+				Err(err).
+				Str("bucket", opts.Bucket).
+				Str("object", aws.ToString(o.Key)).
+				Msg("Unable to delete object")
+			return err
+		}
+	}
 	return nil
 }

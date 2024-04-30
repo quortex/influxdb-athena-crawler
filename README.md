@@ -48,6 +48,7 @@ influxdb-athena-crawler takes as argument the parameters below.
 | prefix | The bucket prefix. | `""` |
 | suffix | Filename suffix to restrict files processed on the bucket. | `""` |
 | clean-objects | Whether to delete S3 objects after processing them. | `false` |
+| s3-max-file-age | How long age should files have been last modified before being cleaned. | `10m` |
 | timeout | The global timeout. | `"30s"` |
 | influx-server | The InfluxDB server address. | `""` |
 | influx-token | The InfluxDB token. | `""` |
