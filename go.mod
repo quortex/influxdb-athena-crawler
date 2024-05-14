@@ -11,5 +11,4 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/rs/zerolog v1.32.0
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )
