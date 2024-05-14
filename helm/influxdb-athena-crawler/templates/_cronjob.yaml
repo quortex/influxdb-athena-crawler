@@ -45,6 +45,9 @@ spec:
                 {{- with .Values.suffix }}
                 - --suffix={{ . }}
                 {{- end }}
+                {{- with .Values.processedFlagSuffix }}
+                - --processed-flag-suffix={{ . }}
+                {{- end }}
                 - --timeout={{ .Values.timeout }}
                 {{- range .Values.influxServers }}
                 - --influx-server={{ . | quote }}
@@ -63,6 +66,9 @@ spec:
                 {{- end }}
                 {{- if .Values.cleanObjects }}
                 - --clean-objects
+                {{- with .Values.maxObjectAge }}
+                - --max-object-age={{ . }}
+                {{- end }}
                 {{- end }}
               env:
                 - name: AWS_ACCESS_KEY_ID

@@ -107,21 +107,21 @@ func main() {
 		Msg("Processing ended !")
 }
 
-func filterBucketContent(elems s3.ListObjectsOutput, suffix, processedFlagSuffix string) (unprocessed, processed s3.ListObjectsOutput) {
+func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuffix string) (unprocessed, processed s3.ListObjectsOutput) {
 	// Rely on .processed files present on the bucket to detect which csv
-	// have already been pushed to influx and which have yet to be processed
+	// has already been pushed to influx and which has yet to be processed
 	csvFiles := []types.Object{}
 	processedElems := []string{}
 
-	if len(suffix) == 0 {
+	if len(csvSuffix) == 0 {
 		return unprocessed, processed
 	}
 	for _, s := range elems.Contents {
-		if strings.HasSuffix(*s.Key, suffix) {
+		if strings.HasSuffix(*s.Key, csvSuffix) {
 			csvFiles = append(csvFiles, s)
 		}
 		if strings.HasSuffix(*s.Key, processedFlagSuffix) {
-			processedElems = append(processedElems, strings.ReplaceAll(*s.Key, processedFlagSuffix, suffix))
+			processedElems = append(processedElems, strings.ReplaceAll(*s.Key, processedFlagSuffix, csvSuffix))
 		}
 	}
 
@@ -217,12 +217,12 @@ func cleanObject(
 	s3Cli *s3.Client,
 	o types.Object,
 ) error {
-	if time.Since(aws.ToTime(o.LastModified)) > opts.S3MaxFileAge {
+	if time.Since(aws.ToTime(o.LastModified)) > opts.MaxObjectAge {
 		// Delete object
 		log.Info().
 			Str("object", aws.ToString(o.Key)).
 			Time("last modified", aws.ToTime(o.LastModified)).
-			Int64("size", o.Size).
+			Int64("size", *o.Size).
 			Msg("Cleaning s3 object")
 
 		_, err := s3Cli.DeleteObject(ctx, &s3.DeleteObjectInput{
