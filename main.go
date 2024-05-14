@@ -88,7 +88,7 @@ func main() {
 
 	if len(unprocCsvs.Contents) > 0 {
 		parallelApply(unprocCsvs, func(o types.Object) {
-			if processObject(ctx, dwn, upl, influxWriter, o); err != nil {
+			if err := processObject(ctx, dwn, upl, influxWriter, o); err != nil {
 				log.Error().Err(err).Msg("Processing error")
 			}
 		})
@@ -96,7 +96,7 @@ func main() {
 
 	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
 		parallelApply(procCsvs, func(o types.Object) {
-			if cleanObject(ctx, s3Cli, o); err != nil {
+			if err := cleanObject(ctx, s3Cli, o); err != nil {
 				log.Error().Err(err).Msg("Cleaning error")
 			}
 		})
