@@ -257,7 +257,7 @@ func cleanObject(
 			return err
 		}
 
-		markerFileName := strings.Replace(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix, -1)
+		markerFileName := strings.ReplaceAll(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix)
 		_, err = s3Cli.DeleteObject(ctx, &s3.DeleteObjectInput{
 			Bucket: aws.String(opts.Bucket),
 			Key:    &markerFileName,
