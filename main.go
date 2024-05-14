@@ -139,7 +139,7 @@ func main() {
 		Msg("Processing ended !")
 }
 
-func filterBucketContent(elems s3.ListObjectsOutput, suffix string, processedFlagSuffix string) (unprocessed s3.ListObjectsOutput, processed s3.ListObjectsOutput) {
+func filterBucketContent(elems s3.ListObjectsOutput, suffix, processedFlagSuffix string) (unprocessed, processed s3.ListObjectsOutput) {
 	// Rely on .processed files present on the bucket to detect which csv
 	// have already been pushed to influx and which have yet to be processed
 	csvFiles := []types.Object{}
