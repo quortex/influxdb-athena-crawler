@@ -64,7 +64,7 @@ func main() {
 		log.Fatal().Err(err).Msg("Unable to list objects")
 	}
 
-	unproc_csvs, proc_csvs := filterBucketContent(*res, opts.Suffix, opts.ProcessedFlagSuffix)
+	unprocCsvs, procCsvs := filterBucketContent(*res, opts.Suffix, opts.ProcessedFlagSuffix)
 
 	if len(proc_csvs.Contents)+len(unproc_csvs.Contents) == 0 {
 		log.Info().Msg("No objects matching bucket / prefix, processing done !")
