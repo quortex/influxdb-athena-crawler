@@ -153,7 +153,7 @@ func filterBucketContent(elems s3.ListObjectsOutput, suffix string, processedFla
 			csvFiles = append(csvFiles, s)
 		}
 		if strings.HasSuffix(*s.Key, processedFlagSuffix) {
-			processedElems = append(processedElems, strings.Replace(*s.Key, processedFlagSuffix, suffix, -1))
+			processedElems = append(processedElems, strings.ReplaceAll(*s.Key, processedFlagSuffix, suffix))
 		}
 	}
 
