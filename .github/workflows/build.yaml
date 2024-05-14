@@ -14,15 +14,20 @@ jobs:
   build-and-push:
     name: BuildAndPush
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     env:
       IMAGE_NAME: influxdb-athena-crawler
       GCP_PROJECT_ID: quortex-registry-public
+      WORKLOAD_IDENTITY_POOL: 'projects/724876838553/locations/global/workloadIdentityPools/github-oidc-pool/providers/github-oidc-provider'
+      SERVICE_ACCOUNT: 'github-influxdb-athena-crawler@quortex-admin.iam.gserviceaccount.com'
 
     steps:
       # This step uses Github's checkout-action: https://github.com/actions/checkout
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Deduced the appropriate tag for the image (inspired by the docker action https://github.com/actions-hub/docker)
       - name: Set env
@@ -38,13 +43,16 @@ jobs:
           fi && \
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_POOL }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          
       # Setup gcloud CLI
       - uses: google-github-actions/setup-gcloud@v1.1.1
-        with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-          export_default_credentials: true
-
+      
       # Build docker image
       - name: Build
         run: |-
