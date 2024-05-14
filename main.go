@@ -66,7 +66,7 @@ func main() {
 
 	unprocCsvs, procCsvs := filterBucketContent(*res, opts.Suffix, opts.ProcessedFlagSuffix)
 
-	if len(proc_csvs.Contents)+len(unproc_csvs.Contents) == 0 {
+	if len(procCsvs.Contents)+len(unprocCsvs.Contents) == 0 {
 		log.Info().Msg("No objects matching bucket / prefix, processing done !")
 		return
 	}
@@ -86,52 +86,20 @@ func main() {
 	)
 	defer influxWriter.Close()
 
-	// Make waitgroup and channels to process objects
-	// tasks asynchronously
-	if len(unproc_csvs.Contents) > 0 {
-		var wg sync.WaitGroup
-		cDone := make(chan bool)
-		wg.Add(len(unproc_csvs.Contents))
-		go func() {
-			// Process each s3 object
-			for _, item := range unproc_csvs.Contents {
-				o := item
-				go func() {
-					defer wg.Done()
-					if err := processObject(ctx, dwn, upl, influxWriter, o); err != nil {
-						log.Error().Err(err).
-							Msg("Processing error")
-					}
-				}()
+	if len(unprocCsvs.Contents) > 0 {
+		parallelApply(unprocCsvs, func(o types.Object) {
+			if processObject(ctx, dwn, upl, influxWriter, o); err != nil {
+				log.Error().Err(err).Msg("Processing error")
 			}
-
-			wg.Wait()
-			close(cDone)
-		}()
-		<-cDone
+		})
 	}
 
-	if opts.CleanObjects && len(proc_csvs.Contents) > 0 {
-		var wgClean sync.WaitGroup
-		cCleanDone := make(chan bool)
-		wgClean.Add(len(proc_csvs.Contents))
-		go func() {
-			// Process each s3 object
-			for _, item := range proc_csvs.Contents {
-				o := item
-				go func() {
-					defer wgClean.Done()
-					if err := cleanObject(ctx, s3Cli, o); err != nil {
-						log.Error().Err(err).
-							Msg("Processing error")
-					}
-				}()
+	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
+		parallelApply(procCsvs, func(o types.Object) {
+			if cleanObject(ctx, s3Cli, o); err != nil {
+				log.Error().Err(err).Msg("Cleaning error")
 			}
-
-			wgClean.Wait()
-			close(cCleanDone)
-		}()
-		<-cCleanDone
+		})
 	}
 
 	log.Info().
@@ -166,6 +134,19 @@ func filterBucketContent(elems s3.ListObjectsOutput, suffix, processedFlagSuffix
 	}
 
 	return unprocessed, processed
+}
+
+func parallelApply(list s3.ListObjectsOutput, fn func(o types.Object)) {
+	var wg sync.WaitGroup
+	wg.Add(len(list.Contents))
+	for _, item := range list.Contents {
+		o := item
+		go func() {
+			defer wg.Done()
+			fn(o)
+		}()
+	}
+	wg.Wait()
 }
 
 func processObject(
