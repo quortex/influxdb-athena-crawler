@@ -132,7 +132,7 @@ func processObject(
 	log.Info().
 		Str("object", aws.ToString(o.Key)).
 		Time("last modified", aws.ToTime(o.LastModified)).
-		Int64("size", o.Size).
+		Int64("size", *o.Size).
 		Msg("Processing s3 object")
 
 	// Download object
