@@ -216,7 +216,7 @@ func processObject(
 	}
 
 	// Add .processed file to S3 bucket to avoid writing the same file to influx twice.
-	markerFileName := strings.Replace(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix, -1)
+	markerFileName := strings.ReplaceAll(*o.Key, opts.Suffix, opts.ProcessedFlagSuffix)
 	if _, err = s3Upl.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(opts.Bucket),
 		Key:    &markerFileName,
