@@ -43,14 +43,16 @@ jobs:
           fi && \
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
-      # Setup gcloud CLI
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
         with:
           token_format: 'access_token'
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_POOL }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
-
+          
+      # Setup gcloud CLI
+      - uses: google-github-actions/setup-gcloud@v1.1.1
+      
       # Build docker image
       - name: Build
         run: |-
