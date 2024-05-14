@@ -11,26 +11,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Instead of using our own CI, we uses https://golangci-lint.run/
-      # It combines 48 linters and execute them in parallel
-      - name: Lint with golangci-lint
-        uses: golangci/golangci-lint-action@v6.0.1
+      - name: Set up go
+        uses: actions/setup-go@v5
         with:
-          version: v1.57.1
+          go-version-file: go.mod
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.58
           args: --timeout 5m
 
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v5
-        with:
-          go-version: ^1.16
-        id: go
-
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Set up go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
       - name: Execute tests
         run: make test
