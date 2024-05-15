@@ -161,7 +161,7 @@ type Options struct {
 	Suffix              string        `long:"suffix" description:"Filename suffix to limit files read on the bucket."`
 	ProcessedFlagSuffix string        `long:"processed-flag-suffix" description:"Filename suffix to mark csv files as processed on the bucket." default:"processed"`
 	CleanObjects        bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
-	MaxObjectAge        time.Duration `long:"max-object-age" description:"When cleanup is activated, only trigger deletion if csv is at leas this old." default:"10m"`
+	MaxObjectAge        time.Duration `long:"max-object-age" description:"When cleanup is activated, only trigger deletion if csv is at least this old." default:"10m"`
 	Timeout             time.Duration `long:"timeout" description:"The global timeout." default:"30s"`
 	InfluxServers       []string      `long:"influx-server" description:"The InfluxDB servers addresses." required:"true"`
 	InfluxToken         string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
