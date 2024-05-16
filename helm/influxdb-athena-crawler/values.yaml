@@ -15,8 +15,14 @@ defaults:
   # -- The bucket files suffix.
   suffix: ""
 
+  # -- The bucket processed flags suffix.
+  processedFlagSuffix: ""
+
   # -- Whether to delete S3 objects after processing them.
   cleanObjects: false
+
+  # -- After how long to delete the objects.
+  maxObjectAge: 5m
 
   # -- The global timeout.
   timeout: 10m
