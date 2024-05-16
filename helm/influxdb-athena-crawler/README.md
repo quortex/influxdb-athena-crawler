@@ -1,6 +1,6 @@
 # influxdb-athena-crawler
 
-![Version: 1.3.0](https://img.shields.io/badge/Version-1.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.4.0](https://img.shields.io/badge/AppVersion-0.4.0-informational?style=flat-square)
+![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.5.0](https://img.shields.io/badge/AppVersion-0.5.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
 
@@ -56,7 +56,10 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | defaults.region | string | `""` | The AWS region. |
 | defaults.bucket | string | `""` | The AWS bucket to watch. |
 | defaults.prefix | string | `""` | The bucket prefix. |
+| defaults.suffix | string | `""` | The bucket files suffix. |
+| defaults.processedFlagSuffix | string | `""` | The bucket processed flags suffix. |
 | defaults.cleanObjects | bool | `false` | Whether to delete S3 objects after processing them. |
+| defaults.maxObjectAge | string | `"5m"` | After how long to delete the objects. |
 | defaults.timeout | string | `"10m"` | The global timeout. |
 | defaults.influxServers | list | `[]` | The InfluxDB servers addresses. |
 | defaults.influxToken | string | `""` | The InfluxDB token. |
@@ -64,7 +67,7 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | defaults.influxBucket | string | `""` | The InfluxDB bucket write to. |
 | defaults.measurement | string | `""` | The InfluxDB bucket measurement. |
 | defaults.timestampRow | string | `"timestamp"` | The timestamp row in CSV. |
-| defaults.timestampLayout | string | `"2006-01-02T15:04:05.000Z"` | The layout to parse timestamp. |
+| defaults.timestampLayout | string | `"2006-01-02 15:04:05.000Z"` | The layout to parse timestamp. |
 | defaults.tags | list | `[]` |  |
 | defaults.fields | list | `[]` |  |
 | defaults.awsCredsSecret | string | `"aws-creds"` | A reference to a secret wit AWS credentials (must contain awsKeyId / awsSecretKey). |
