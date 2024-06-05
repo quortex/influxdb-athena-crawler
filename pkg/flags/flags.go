@@ -172,6 +172,7 @@ type Options struct {
 	TimestampLayout     string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
 	Tags                []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row."`
 	Fields              []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,row:bar}', if not specified, CSV row matches field name. Type can be float, int, string or bool."`
+	MaxRoutines         int           `long:"max-routines" description:"How many routines should be created to parallelize object processing." default:"100"`
 }
 
 // Parse parses flags into give Option
