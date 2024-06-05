@@ -60,9 +60,6 @@ defaults:
   # -- The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
   schedule: "0 0 * * *"
 
-  # -- Specifies how to treat concurrent executions of a Job (Allow / Forbid / Replace).
-  concurrencyPolicy: Forbid
-
   # -- Specifies the number of retries before marking a job as failed.
   backoffLimit: 6
 

@@ -71,9 +71,7 @@ func main() {
 			}
 		})
 
-	var i int
 	for p.HasMorePages() {
-		i++
 		page, err := p.NextPage(ctx)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Unable to get object page")
@@ -137,6 +135,7 @@ func main() {
 func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuffix string) (unprocessed, processed, orphanFlags s3.ListObjectsOutput) {
 	// Rely on .processed files present on the bucket to detect which csv
 	// has already been pushed to influx and which has yet to be processed
+	// List .processed files that do not match any data file in order to clean them up, this can happen if the crawler was interrupted
 	csvFiles := []types.Object{}
 	flags := []types.Object{}
 	objectNames := []string{}
@@ -177,6 +176,7 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 }
 
 func parallelApply(list s3.ListObjectsOutput, fn func(o types.Object)) {
+	//Limit the number of parallel routines doing the processing.
 	semaphore := make(chan struct{}, opts.MaxRoutines)
 	var wg sync.WaitGroup
 	wg.Add(len(list.Contents))
