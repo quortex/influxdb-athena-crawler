@@ -58,18 +58,10 @@ func main() {
 	maxKeys := int32(1000)
 	var elems s3.ListObjectsOutput
 
-	p := s3.NewListObjectsV2Paginator(
-		s3Cli,
-		&s3.ListObjectsV2Input{
-			Bucket:  aws.String(opts.Bucket),
-			Prefix:  aws.String(opts.Prefix),
-			MaxKeys: &maxKeys,
-		},
-		func(o *s3.ListObjectsV2PaginatorOptions) {
-			if v := int32(maxKeys); v != 0 {
-				o.Limit = v
-			}
-		})
+	p := s3.NewListObjectsV2Paginator(s3Cli,&s3.ListObjectsV2Input{
+		Bucket:  aws.String(opts.Bucket),
+		Prefix:  aws.String(opts.Prefix),
+	})
 
 	for p.HasMorePages() {
 		page, err := p.NextPage(ctx)
