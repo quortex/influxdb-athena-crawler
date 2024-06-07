@@ -44,10 +44,6 @@ func main() {
 		log.Fatal().Msg("Timeout reached !")
 	}()
 
-	// use errgroup to limit the amount of parallel routines
-	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(opts.MaxRoutines)
-
 	// Init AWS s3 client
 	// Using the SDK's default configuration, loading additional config
 	// and credentials values from the environment variables, shared
@@ -100,30 +96,21 @@ func main() {
 	defer influxWriter.Close()
 
 	if len(unprocCsvs.Contents) > 0 {
-		g.Go(func() error {
-			return parallelApply(unprocCsvs, func(o types.Object) error {
-				return processObject(ctx, dwn, upl, influxWriter, o)
-			})
+		parallelApply(ctx, unprocCsvs, func(o types.Object) error {
+			return processObject(ctx, dwn, upl, influxWriter, o)
 		})
-		g.Wait()
 	}
 
 	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
-		g.Go(func() error {
-			return parallelApply(procCsvs, func(o types.Object) error {
-				return cleanObject(ctx, s3Cli, o)
-			})
+		parallelApply(ctx, procCsvs, func(o types.Object) error {
+			return cleanObject(ctx, s3Cli, o)
 		})
-		g.Wait()
 	}
 
 	if len(orphanFlags.Contents) > 0 {
-		g.Go(func() error {
-			return parallelApply(orphanFlags, func(o types.Object) error {
-				return cleanObject(ctx, s3Cli, o)
-			})
+		parallelApply(ctx, orphanFlags, func(o types.Object) error {
+			return cleanObject(ctx, s3Cli, o)
 		})
-		g.Wait()
 	}
 
 	log.Info().
@@ -174,19 +161,21 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 	return unprocessed, processed, orphanFlags
 }
 
-func parallelApply(list s3.ListObjectsOutput, fn func(o types.Object) error) error {
+func parallelApply(ctx context.Context, list s3.ListObjectsOutput, fn func(o types.Object) error) {
 	//Limit the number of parallel routines doing the processing.
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(opts.MaxRoutines)
+
 	var wg sync.WaitGroup
 	wg.Add(len(list.Contents))
 	for _, item := range list.Contents {
 		o := item
-		go func() error {
+		g.Go(func() error {
 			defer wg.Done()
 			return fn(o)
-		}()
+		})
 	}
 	wg.Wait()
-	return nil
 }
 
 func processObject(
