@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   influxdb-athena-crawler:
   - apiVersion: v2
+    appVersion: 0.6.0
+    created: "2024-06-07T12:24:18.214537448Z"
+    description: A cronjob that get athena reports on s3 and writes to influxdb periodically.
+    digest: 6f1c914b9c2b9da0235bb8e95b16e82ec74b5df0a4f558f10c1a5a8cadc8d387
+    name: influxdb-athena-crawler
+    type: application
+    urls:
+    - https://github.com/quortex/influxdb-athena-crawler/releases/download/influxdb-athena-crawler-chart-1.5.0/influxdb-athena-crawler-1.5.0.tgz
+    version: 1.5.0
+  - apiVersion: v2
     appVersion: 0.5.0
     created: "2024-05-16T12:43:58.101072472Z"
     description: A cronjob that get athena reports on s3 and writes to influxdb periodically.
@@ -81,4 +91,4 @@ entries:
     urls:
     - https://github.com/quortex/influxdb-athena-crawler/releases/download/influxdb-athena-crawler-chart-0.1.0/influxdb-athena-crawler-0.1.0.tgz
     version: 0.1.0
-generated: "2024-05-16T12:43:58.101109872Z"
+generated: "2024-06-07T12:24:18.214575118Z"
