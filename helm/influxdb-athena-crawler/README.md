@@ -1,6 +1,6 @@
 # influxdb-athena-crawler
 
-![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.5.0](https://img.shields.io/badge/AppVersion-0.5.0-informational?style=flat-square)
+![Version: 1.5.0](https://img.shields.io/badge/Version-1.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
 
@@ -72,7 +72,6 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | defaults.fields | list | `[]` |  |
 | defaults.awsCredsSecret | string | `"aws-creds"` | A reference to a secret wit AWS credentials (must contain awsKeyId / awsSecretKey). |
 | defaults.schedule | string | `"0 0 * * *"` | The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron. |
-| defaults.concurrencyPolicy | string | `"Forbid"` | Specifies how to treat concurrent executions of a Job (Allow / Forbid / Replace). |
 | defaults.backoffLimit | int | `6` | Specifies the number of retries before marking a job as failed. |
 | defaults.successfulJobsHistoryLimit | int | `3` | The number of successful finished jobs to retain. |
 | defaults.failedJobsHistoryLimit | int | `1` | The number of failed finished jobs to retain. |
