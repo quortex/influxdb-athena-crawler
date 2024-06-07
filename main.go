@@ -5,7 +5,6 @@ import (
 	"context"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -96,9 +95,12 @@ func main() {
 	defer influxWriter.Close()
 
 	if len(unprocCsvs.Contents) > 0 {
-		parallelApply(ctx, unprocCsvs, func(o types.Object) error {
+		err = parallelApply(ctx, unprocCsvs, func(o types.Object) error {
 			return processObject(ctx, dwn, upl, influxWriter, o)
 		})
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed processing objects")
+		}
 	}
 
 	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
@@ -161,21 +163,18 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 	return unprocessed, processed, orphanFlags
 }
 
-func parallelApply(ctx context.Context, list s3.ListObjectsOutput, fn func(o types.Object) error) {
+func parallelApply(ctx context.Context, list s3.ListObjectsOutput, fn func(o types.Object) error) error {
 	//Limit the number of parallel routines doing the processing.
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(opts.MaxRoutines)
 
-	var wg sync.WaitGroup
-	wg.Add(len(list.Contents))
 	for _, item := range list.Contents {
 		o := item
 		g.Go(func() error {
-			defer wg.Done()
 			return fn(o)
 		})
 	}
-	wg.Wait()
+	return g.Wait()
 }
 
 func processObject(
