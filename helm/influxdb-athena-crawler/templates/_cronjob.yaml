@@ -12,7 +12,7 @@ metadata:
     {{- include "influxdb-athena-crawler.labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.schedule | quote }}
-  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
+  concurrencyPblicy: Forbid
   successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
   successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
   suspend: {{ .Values.suspend }}

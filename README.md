@@ -59,6 +59,7 @@ influxdb-athena-crawler takes as argument the parameters below.
 | timestamp-layout | The layout to parse timestamp. | `"2006-01-02T15:04:05.000Z"` |
 | tag | Tags to add to InfluxDB point. Could be of the form `--tag=foo` if tag name matches CSV row or `--tag='foo={row:bar}'` to specify row. | `""` |
 | field | Fields to add to InfluxDB point. Could be of the form `--field='foo={type:int,row:bar}'`, if not specified, CSV row matches field name. Type can be float, int, string or bool. | `""` |
+| max-routines | The max number of concurrent object processing routines. | `100` |
 
 ## License
 
