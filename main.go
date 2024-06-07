@@ -104,15 +104,21 @@ func main() {
 	}
 
 	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
-		parallelApply(ctx, procCsvs, func(o types.Object) error {
+		err = parallelApply(ctx, procCsvs, func(o types.Object) error {
 			return cleanObject(ctx, s3Cli, o)
 		})
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed cleaning objects")
+		}
 	}
 
 	if len(orphanFlags.Contents) > 0 {
-		parallelApply(ctx, orphanFlags, func(o types.Object) error {
+		err = parallelApply(ctx, orphanFlags, func(o types.Object) error {
 			return cleanObject(ctx, s3Cli, o)
 		})
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed cleaning orphan flags")
+		}
 	}
 
 	log.Info().
@@ -165,7 +171,7 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 
 func parallelApply(ctx context.Context, list s3.ListObjectsOutput, fn func(o types.Object) error) error {
 	//Limit the number of parallel routines doing the processing.
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	g.SetLimit(opts.MaxRoutines)
 
 	for _, item := range list.Contents {
