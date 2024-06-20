@@ -155,24 +155,26 @@ func (f *Field) MarshalFlag() (string, error) {
 
 // Options wraps all flags
 type Options struct {
-	Region              string        `long:"region" description:"The AWS region." required:"true"`
-	Bucket              string        `long:"bucket" description:"The AWS bucket to watch." required:"true"`
-	Prefix              string        `long:"prefix" description:"The bucket prefix."`
-	Suffix              string        `long:"suffix" description:"Filename suffix to limit files read on the bucket."`
-	ProcessedFlagSuffix string        `long:"processed-flag-suffix" description:"Filename suffix to mark csv files as processed on the bucket." default:"processed"`
-	CleanObjects        bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
-	MaxObjectAge        time.Duration `long:"max-object-age" description:"When cleanup is activated, only trigger deletion if csv is at least this old." default:"10m"`
-	Timeout             time.Duration `long:"timeout" description:"The global timeout." default:"30s"`
-	InfluxServers       []string      `long:"influx-server" description:"The InfluxDB servers addresses." required:"true"`
-	InfluxToken         string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
-	InfluxOrg           string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
-	InfluxBucket        string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
-	Measurement         string        `long:"measurement" description:"A measurement acts as a container for tags, fields, and timestamps. Use a measurement name that describes your data." required:"true"`
-	TimestampRow        string        `long:"timestamp-row" description:"The timestamp row in CSV." default:"timestamp"`
-	TimestampLayout     string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
-	Tags                []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row."`
-	Fields              []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,row:bar}', if not specified, CSV row matches field name. Type can be float, int, string or bool."`
-	MaxRoutines         int           `long:"max-routines" description:"How many routines should be created to parallelize object processing." default:"100"`
+	Region                 string        `long:"region" description:"The AWS region." required:"true"`
+	Bucket                 string        `long:"bucket" description:"The AWS bucket to watch." required:"true"`
+	Prefix                 string        `long:"prefix" description:"The bucket prefix."`
+	Suffix                 string        `long:"suffix" description:"Filename suffix to limit files read on the bucket."`
+	ProcessedFlagSuffix    string        `long:"processed-flag-suffix" description:"Filename suffix to mark csv files as processed on the bucket." default:"processed"`
+	CleanObjects           bool          `long:"clean-objects" description:"Whether to delete S3 objects after processing them."`
+	MaxObjectAge           time.Duration `long:"max-object-age" description:"When cleanup is activated, only trigger deletion if csv is at least this old." default:"10m"`
+	RetainWindows          int           `long:"retain-windows" description:"When cleanup is activated, only trigger deletion at least this number of more recent metric folders exist." default:"0"`
+	StorageTimestampLayout string        `long:"storage-timestamp-layout" description:"The layout used for csv file storage, e.g. part of the S3 path." default:"2006-01-02T15:04:05.000Z"`
+	Timeout                time.Duration `long:"timeout" description:"The global timeout." default:"30s"`
+	InfluxServers          []string      `long:"influx-server" description:"The InfluxDB servers addresses." required:"true"`
+	InfluxToken            string        `long:"influx-token" description:"The InfluxDB token." required:"true"`
+	InfluxOrg              string        `long:"influx-org" description:"The InfluxDB org to write to." required:"true"`
+	InfluxBucket           string        `long:"influx-bucket" description:"The InfluxDB bucket write to." required:"true"`
+	Measurement            string        `long:"measurement" description:"A measurement acts as a container for tags, fields, and timestamps. Use a measurement name that describes your data." required:"true"`
+	TimestampRow           string        `long:"timestamp-row" description:"The timestamp row in CSV." default:"timestamp"`
+	TimestampLayout        string        `long:"timestamp-layout" description:"The layout to parse timestamp." default:"2006-01-02T15:04:05.000Z"`
+	Tags                   []*Tag        `long:"tag" description:"Tags to add to InfluxDB point. Could be of the form --tag=foo if tag name matches CSV row or --tag='foo={row:bar}' to specify row."`
+	Fields                 []*Field      `long:"field" description:"Fields to add to InfluxDB point. Could be of the form --field='foo={type:int,row:bar}', if not specified, CSV row matches field name. Type can be float, int, string or bool."`
+	MaxRoutines            int           `long:"max-routines" description:"How many routines should be created to parallelize object processing." default:"100"`
 }
 
 // Parse parses flags into give Option

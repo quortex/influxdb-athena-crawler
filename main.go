@@ -79,6 +79,8 @@ func main() {
 		return
 	}
 
+	procCsvs = filterOutNewerWindows(procCsvs, opts.RetainWindows)
+
 	dwn := manager.NewDownloader(s3Cli)
 	upl := manager.NewUploader(s3Cli)
 	influxWriter := influxdb.NewWriters(
@@ -167,6 +169,46 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 	}
 
 	return unprocessed, processed, orphanFlags
+}
+
+func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (olderObjects s3.ListObjectsOutput) {
+	windowedObject := make(map[int64][]types.Object)
+	var windows []int64
+
+	for _, o := range objects.Contents {
+		path := strings.Split(*o.Key, "/")
+		if len(path) < 2 {
+			log.Error().
+				Str("object", aws.ToString(o.Key)).
+				Msg("No timestamp in path")
+		}
+		// We expect the time window of each CSV to be the former to last element of the S3 path
+		ts, err := time.Parse(opts.StorageTimestampLayout, path[len(path)-2])
+		if err != nil {
+			log.Error().
+				Err(err).
+				Str("object", aws.ToString(o.Key)).
+				Str("time window", path[len(path)-2]).
+				Msg("Unable to parse object time window")
+			continue
+		}
+		windowedObject[ts.UnixMilli()] = append(windowedObject[ts.UnixMilli()], o)
+		if !slices.Contains(windows, ts.UnixMilli()) {
+			windows = append(windows, ts.UnixMilli())
+		}
+	}
+
+	slices.Sort(windows)
+	slices.Reverse(windows)
+	// Return all the objects, except the ones in the "folderCount" last windows
+	for rank, window := range windows {
+		if rank < folderCount {
+			continue
+		}
+		olderObjects.Contents = slices.Concat(olderObjects.Contents, windowedObject[window])
+	}
+
+	return olderObjects
 }
 
 func parallelApply(ctx context.Context, list s3.ListObjectsOutput, fn func(o types.Object) error) error {
