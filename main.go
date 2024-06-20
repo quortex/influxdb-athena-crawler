@@ -172,6 +172,7 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 }
 
 func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (olderObjects s3.ListObjectsOutput) {
+	// Remove the <folderCount> most recent folders from the object listing in order to not clean them
 	windowedObject := make(map[int64][]types.Object)
 	var windows []int64
 

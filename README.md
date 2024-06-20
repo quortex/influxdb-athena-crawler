@@ -49,7 +49,7 @@ influxdb-athena-crawler takes as argument the parameters below.
 | suffix | Filename suffix to restrict files processed on the bucket. | `""` |
 | clean-objects | Whether to delete S3 objects after processing them. | `false` |
 | max-object-age | How long to wait since last modification before file cleaning. | `10m` |
-| retain-windows | When cleanup is activated, only trigger deletion at least this number of more recent metric folders exist. This requires the former to last folder in the CSV path to be formatted as a timestamp. | `0` |
+| retain-windows | When cleanup is activated, only trigger deletion at least this number of more recent metric folders exist. This requires the former to last element in the CSV path to be formatted as a timestamp. | `0` |
 | storage-timestamp-layout | The layout used in the last element of the CSV storage. | `"2006-01-02T15:04:05.000Z"` |
 | timeout | The global timeout. | `"30s"` |
 | influx-server | The InfluxDB server address. | `""` |
