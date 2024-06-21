@@ -79,8 +79,6 @@ func main() {
 		return
 	}
 
-	procCsvs = filterOutNewerWindows(procCsvs, opts.RetainWindows)
-
 	dwn := manager.NewDownloader(s3Cli)
 	upl := manager.NewUploader(s3Cli)
 	influxWriter := influxdb.NewWriters(
@@ -104,6 +102,9 @@ func main() {
 			log.Fatal().Err(err).Msg("Failed processing objects")
 		}
 	}
+
+	// Only clean up processed files that are not in the opts.RetainWindows most recent folders
+	procCsvs = filterOutNewerWindows(procCsvs, opts.RetainWindows)
 
 	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
 		err = parallelApply(ctx, procCsvs, func(o types.Object) error {
@@ -171,10 +172,14 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 	return unprocessed, processed, orphanFlags
 }
 
-func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (olderObjects s3.ListObjectsOutput) {
-	// Remove the <folderCount> most recent folders from the object listing in order to not clean them
+func filterOutNewerWindows(objects s3.ListObjectsOutput, newestWindowCountToIgnore int) (olderObjects s3.ListObjectsOutput) {
+	// Remove the <newestWindowCountToIgnore> most recent folders from the object listing in order to not clean them
 	windowedObject := make(map[int64][]types.Object)
 	var windows []int64
+
+	if newestWindowCountToIgnore == 0 {
+		return objects
+	}
 
 	for _, o := range objects.Contents {
 		path := strings.Split(*o.Key, "/")
@@ -184,7 +189,7 @@ func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (older
 				Msg("No timestamp in path")
 			continue
 		}
-		// We expect the time window of each CSV to be the former to last element of the S3 path
+		// We expect the beginning of the time window of each CSV to be the former to last element of the S3 path
 		ts, err := time.Parse(opts.StorageTimestampLayout, path[len(path)-2])
 		if err != nil {
 			log.Error().
@@ -202,14 +207,13 @@ func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (older
 
 	slices.Sort(windows)
 	slices.Reverse(windows)
-	// Return all the objects, except the ones in the "folderCount" last windows
+	// Return all the objects, except the ones in the "newestWindowCountToIgnore" last windows
 	for i, window := range windows {
-		if i < folderCount {
+		if i < newestWindowCountToIgnore {
 			continue
 		}
 		olderObjects.Contents = slices.Concat(olderObjects.Contents, windowedObject[window])
 	}
-	
 
 	return olderObjects
 }
