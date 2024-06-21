@@ -182,6 +182,7 @@ func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (older
 			log.Error().
 				Str("object", aws.ToString(o.Key)).
 				Msg("No timestamp in path")
+			continue
 		}
 		// We expect the time window of each CSV to be the former to last element of the S3 path
 		ts, err := time.Parse(opts.StorageTimestampLayout, path[len(path)-2])
