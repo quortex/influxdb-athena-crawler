@@ -129,10 +129,10 @@ func main() {
 		Msg("Processing ended !")
 }
 
+// Rely on .processed files present on the bucket to detect which csv
+// has already been pushed to influx and which has yet to be processed
+// List .processed files that do not match any data file in order to clean them up, this can happen if the crawler was interrupted
 func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuffix string) (unprocessed, processed, orphanFlags s3.ListObjectsOutput) {
-	// Rely on .processed files present on the bucket to detect which csv
-	// has already been pushed to influx and which has yet to be processed
-	// List .processed files that do not match any data file in order to clean them up, this can happen if the crawler was interrupted
 	csvFiles := []types.Object{}
 	flags := []types.Object{}
 	objectNames := []string{}
@@ -172,8 +172,8 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 	return unprocessed, processed, orphanFlags
 }
 
+// Remove the <newestWindowCountToIgnore> most recent folders from the object listing in order to not clean them
 func filterOutNewerWindows(objects s3.ListObjectsOutput, newestWindowCountToIgnore int) (olderObjects s3.ListObjectsOutput) {
-	// Remove the <newestWindowCountToIgnore> most recent folders from the object listing in order to not clean them
 	windowedObject := make(map[int64][]types.Object)
 	var windows []int64
 
