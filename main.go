@@ -203,12 +203,13 @@ func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (older
 	slices.Sort(windows)
 	slices.Reverse(windows)
 	// Return all the objects, except the ones in the "folderCount" last windows
-	for rank, window := range windows {
-		if rank < folderCount {
+	for i, window := range windows {
+		if i < folderCount {
 			continue
 		}
 		olderObjects.Contents = slices.Concat(olderObjects.Contents, windowedObject[window])
 	}
+	
 
 	return olderObjects
 }
