@@ -190,7 +190,7 @@ func filterOutNewerWindows(objects s3.ListObjectsOutput, folderCount int) (older
 			log.Error().
 				Err(err).
 				Str("object", aws.ToString(o.Key)).
-				Str("time window", path[len(path)-2]).
+				Str("time-window", path[len(path)-2]).
 				Msg("Unable to parse object time window")
 			continue
 		}
