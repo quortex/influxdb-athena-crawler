@@ -103,6 +103,9 @@ func main() {
 		}
 	}
 
+	// Only clean up processed files that are not in the opts.RetainWindows most recent folders
+	procCsvs = filterOutNewerWindows(procCsvs, opts.RetainWindows)
+
 	if opts.CleanObjects && len(procCsvs.Contents) > 0 {
 		err = parallelApply(ctx, procCsvs, func(o types.Object) error {
 			return cleanObject(ctx, s3Cli, o)
@@ -126,10 +129,10 @@ func main() {
 		Msg("Processing ended !")
 }
 
+// Rely on .processed files present on the bucket to detect which csv
+// has already been pushed to influx and which has yet to be processed
+// List .processed files that do not match any data file in order to clean them up, this can happen if the crawler was interrupted
 func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuffix string) (unprocessed, processed, orphanFlags s3.ListObjectsOutput) {
-	// Rely on .processed files present on the bucket to detect which csv
-	// has already been pushed to influx and which has yet to be processed
-	// List .processed files that do not match any data file in order to clean them up, this can happen if the crawler was interrupted
 	csvFiles := []types.Object{}
 	flags := []types.Object{}
 	objectNames := []string{}
@@ -167,6 +170,52 @@ func filterBucketContent(elems s3.ListObjectsOutput, csvSuffix, processedFlagSuf
 	}
 
 	return unprocessed, processed, orphanFlags
+}
+
+// Remove the <newestWindowCountToIgnore> most recent folders from the object listing in order to not clean them
+func filterOutNewerWindows(objects s3.ListObjectsOutput, newestWindowCountToIgnore int) (olderObjects s3.ListObjectsOutput) {
+	windowedObject := make(map[int64][]types.Object)
+	var windows []int64
+
+	if newestWindowCountToIgnore == 0 {
+		return objects
+	}
+
+	for _, o := range objects.Contents {
+		path := strings.Split(*o.Key, "/")
+		if len(path) < 2 {
+			log.Error().
+				Str("object", aws.ToString(o.Key)).
+				Msg("No timestamp in path")
+			continue
+		}
+		// We expect the beginning of the time window of each CSV to be the former to last element of the S3 path
+		ts, err := time.Parse(opts.StorageTimestampLayout, path[len(path)-2])
+		if err != nil {
+			log.Error().
+				Err(err).
+				Str("object", aws.ToString(o.Key)).
+				Str("time-window", path[len(path)-2]).
+				Msg("Unable to parse object time window")
+			continue
+		}
+		windowedObject[ts.UnixMilli()] = append(windowedObject[ts.UnixMilli()], o)
+		if !slices.Contains(windows, ts.UnixMilli()) {
+			windows = append(windows, ts.UnixMilli())
+		}
+	}
+
+	slices.Sort(windows)
+	slices.Reverse(windows)
+	// Return all the objects, except the ones in the "newestWindowCountToIgnore" last windows
+	for i, window := range windows {
+		if i < newestWindowCountToIgnore {
+			continue
+		}
+		olderObjects.Contents = slices.Concat(olderObjects.Contents, windowedObject[window])
+	}
+
+	return olderObjects
 }
 
 func parallelApply(ctx context.Context, list s3.ListObjectsOutput, fn func(o types.Object) error) error {
