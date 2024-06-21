@@ -6,11 +6,11 @@ toolchain go1.22.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.27.2
-	github.com/aws/aws-sdk-go-v2/config v1.27.16
+	github.com/aws/aws-sdk-go-v2/config v1.27.18
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.21
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.55.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
-	github.com/jessevdk/go-flags v1.5.0
+	github.com/jessevdk/go-flags v1.6.1
 	github.com/rs/zerolog v1.33.0
 	golang.org/x/sync v0.7.0
 )
@@ -18,8 +18,8 @@ require (
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.2 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.16 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.3 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.18 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
@@ -39,6 +39,6 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
