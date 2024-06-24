@@ -7,7 +7,7 @@ toolchain go1.22.0
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.21
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.24
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.56.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/jessevdk/go-flags v1.6.1
