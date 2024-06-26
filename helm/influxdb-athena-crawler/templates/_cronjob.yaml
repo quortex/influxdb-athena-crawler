@@ -83,6 +83,10 @@ spec:
                       key: awsSecretKey
                       name: {{ .Values.awsCredsSecret }}
                       optional: true
+                {{- with .Values.goMemLimit }}
+                - name: GOMEMLIMIT
+                  value: {{ . }}
+                {{- end }}
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
           {{- with .Values.nodeSelector }}

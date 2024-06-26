@@ -95,6 +95,9 @@ defaults:
   # -- influxdb-athena-crawler container required resources.
   resources: {}
 
+  # -- golang memory limit added to pods as an env var
+  goMemLimit: ""
+
   # -- Annotations to be added to pods.
   podAnnotations: {}
 

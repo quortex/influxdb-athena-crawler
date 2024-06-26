@@ -1,6 +1,6 @@
 # influxdb-athena-crawler
 
-![Version: 1.5.1](https://img.shields.io/badge/Version-1.5.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
+![Version: 1.6.0](https://img.shields.io/badge/Version-1.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
 
@@ -84,6 +84,7 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | defaults.nameOverride | string | `""` | Helm's name computing override. |
 | defaults.fullnameOverride | string | `""` | Helm's fullname computing override. |
 | defaults.resources | object | `{}` | influxdb-athena-crawler container required resources. |
+| defaults.goMemLimit | string | `""` | golang memory limit added to pods as an env var |
 | defaults.podAnnotations | object | `{}` | Annotations to be added to pods. |
 | defaults.nodeSelector | object | `{}` | Node labels for influxdb-athena-crawler pod assignment. |
 | defaults.tolerations | list | `[]` | Node tolerations for influxdb-athena-crawler scheduling to nodes with taints. |
