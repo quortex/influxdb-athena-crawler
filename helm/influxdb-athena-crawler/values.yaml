@@ -24,6 +24,12 @@ defaults:
   # -- After how long to delete the objects.
   maxObjectAge: 5m
 
+  # -- Wether to retain this number of most recent folders
+  retainWindows: ""
+
+  # -- The timestamp layout used in folder naming used for the retainWindows flag.
+  storageTimestampLayout: ""
+
   # -- The global timeout.
   timeout: 10m
 
@@ -97,6 +103,9 @@ defaults:
 
   # -- golang memory limit added to pods as an env var
   goMemLimit: ""
+
+  # -- Max number of parallel routines to be used for object processing
+  maxRoutines: ""
 
   # -- Annotations to be added to pods.
   podAnnotations: {}
