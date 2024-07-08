@@ -64,10 +64,19 @@ spec:
                 {{- range .Values.fields }}
                 - --field={{ . | quote }}
                 {{- end }}
+                {{- with .Values.maxRoutines }}
+                - --max-routines={{ . }}
+                {{- end }}
                 {{- if .Values.cleanObjects }}
                 - --clean-objects
                 {{- with .Values.maxObjectAge }}
                 - --max-object-age={{ . }}
+                {{- end }}
+                {{- with .Values.retainWindows }}
+                - --retain-windows={{ . }}
+                {{- end }}
+                {{- with .Values.storageTimestampLayout }}
+                - --storage-timestamp-layout={{ . }}
                 {{- end }}
                 {{- end }}
               env:
