@@ -51,7 +51,7 @@ jobs:
           service_account: ${{ env.SERVICE_ACCOUNT }}
           
       # Setup gcloud CLI
-      - uses: google-github-actions/setup-gcloud@v2.1.0
+      - uses: google-github-actions/setup-gcloud@v2.1.1
       
       # Build docker image
       - name: Build
