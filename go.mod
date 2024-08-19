@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.0
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.30.0
+	github.com/aws/aws-sdk-go-v2 v1.30.4
 	github.com/aws/aws-sdk-go-v2/config v1.27.21
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.24
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.56.1
@@ -31,14 +31,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.21.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.25.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.29.1 // indirect
-	github.com/aws/smithy-go v1.20.2 // indirect
+	github.com/aws/smithy-go v1.20.4 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
