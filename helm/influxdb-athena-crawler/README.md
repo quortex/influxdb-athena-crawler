@@ -1,6 +1,6 @@
 # influxdb-athena-crawler
 
-![Version: 1.7.0](https://img.shields.io/badge/Version-1.7.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.0](https://img.shields.io/badge/AppVersion-0.7.0-informational?style=flat-square)
+![Version: 1.8.0](https://img.shields.io/badge/Version-1.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.8.0](https://img.shields.io/badge/AppVersion-0.8.0-informational?style=flat-square)
 
 A cronjob that get athena reports on s3 and writes to influxdb periodically.
 
@@ -60,8 +60,6 @@ helm install influxdb-athena-crawler influxdb-athena-crawler/influxdb-athena-cra
 | defaults.processedFlagSuffix | string | `""` | The bucket processed flags suffix. |
 | defaults.cleanObjects | bool | `false` | Whether to delete S3 objects after processing them. |
 | defaults.maxObjectAge | string | `"5m"` | After how long to delete the objects. |
-| defaults.retainWindows | string | `""` | Wether to retain this number of most recent folders |
-| defaults.storageTimestampLayout | string | `""` | The timestamp layout used in folder naming used for the retainWindows flag. |
 | defaults.timeout | string | `"10m"` | The global timeout. |
 | defaults.influxServers | list | `[]` | The InfluxDB servers addresses. |
 | defaults.influxToken | string | `""` | The InfluxDB token. |

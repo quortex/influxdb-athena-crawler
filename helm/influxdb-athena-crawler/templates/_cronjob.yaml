@@ -72,12 +72,6 @@ spec:
                 {{- with .Values.maxObjectAge }}
                 - --max-object-age={{ . }}
                 {{- end }}
-                {{- with .Values.retainWindows }}
-                - --retain-windows={{ . }}
-                {{- end }}
-                {{- with .Values.storageTimestampLayout }}
-                - --storage-timestamp-layout={{ . }}
-                {{- end }}
                 {{- end }}
               env:
                 - name: AWS_ACCESS_KEY_ID
