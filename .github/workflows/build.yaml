@@ -65,11 +65,16 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # Build docker image
+      - name: Prepare cross-compilation Dockerfile
+        run: sed -e '1 s/\(^FROM\)/FROM --platform=${BUILDPLATFORM}/; t' -e ' 1,// s//FROM --platform=${BUILDPLATFORM}/' Dockerfile > Dockerfile.cross
+
       # Build and push docker image with buildx
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile.cross
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
