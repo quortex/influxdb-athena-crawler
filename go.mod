@@ -12,7 +12,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/rs/zerolog v1.33.0
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.8.0
 )
 
 require (
